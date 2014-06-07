@@ -35,6 +35,15 @@ ASurCharacter::ASurCharacter(const class FPostConstructInitializeProperties& PCI
 	bReplicateMovement = true;
 	bReplicates = true;
 
+
+	
+
+
+}
+
+void ASurCharacter::Tick(float DeltaSeconds){
+	Super::Tick(DeltaSeconds);
+	
 }
 
 
