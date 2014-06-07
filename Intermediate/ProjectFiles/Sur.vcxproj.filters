@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<ItemGroup>
+		<None Include="..\..\Sur.uproject" />
+		<Filter Include="Source">
+			<UniqueIdentifier>{C6295AD4-3DF2-4477-9EA7-34E7074EB317}</UniqueIdentifier>
+		</Filter>
+		<None Include="..\..\Source\Sur.Target.cs">
+			<Filter>Source</Filter>
+		</None >
+		<None Include="..\..\Source\SurEditor.Target.cs">
+			<Filter>Source</Filter>
+		</None >
+		<Filter Include="Config">
+			<UniqueIdentifier>{D7976CAE-7A30-4D6F-90AB-96CE6F9F76BD}</UniqueIdentifier>
+		</Filter>
+		<None Include="..\..\Config\DefaultEngine.ini">
+			<Filter>Config</Filter>
+		</None >
+		<None Include="..\..\Config\DefaultGame.ini">
+			<Filter>Config</Filter>
+		</None >
+		<Filter Include="Source\Sur">
+			<UniqueIdentifier>{AE5BF6A9-B545-4D4C-8EC3-FC378A269FFE}</UniqueIdentifier>
+		</Filter>
+		<None Include="..\..\Source\Sur\Sur.Build.cs">
+			<Filter>Source\Sur</Filter>
+		</None >
+		<ClCompile Include="..\..\Source\Sur\Sur.cpp">
+			<Filter>Source\Sur</Filter>
+		</ClCompile >
+		<ClInclude Include="..\..\Source\Sur\Sur.h">
+			<Filter>Source\Sur</Filter>
+		</ClInclude >
+		<ClCompile Include="..\..\Source\Sur\SurGameMode.cpp">
+			<Filter>Source\Sur</Filter>
+		</ClCompile >
+		<ClInclude Include="..\..\Source\Sur\SurGameMode.h">
+			<Filter>Source\Sur</Filter>
+		</ClInclude >
+		<ClCompile Include="..\..\Source\Sur\SurPlayerController.cpp">
+			<Filter>Source\Sur</Filter>
+		</ClCompile >
+		<ClInclude Include="..\..\Source\Sur\SurPlayerController.h">
+			<Filter>Source\Sur</Filter>
+		</ClInclude >
+		<Filter Include="Source\Sur\Resources">
+			<UniqueIdentifier>{7D7DBA15-647C-4DC5-9244-3FE57D70E13E}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="Source\Sur\Resources\Windows">
+			<UniqueIdentifier>{84FDB1D3-EA0A-4CA5-8600-839689B2B915}</UniqueIdentifier>
+		</Filter>
+		<None Include="..\..\Source\Sur\Resources\Windows\Sur.ico">
+			<Filter>Source\Sur\Resources\Windows</Filter>
+		</None >
+		<ResourceCompile Include="..\..\Source\Sur\Resources\Windows\Sur.rc">
+			<Filter>Source\Sur\Resources\Windows</Filter>
+		</ResourceCompile >
+	</ItemGroup>
+</Project>
