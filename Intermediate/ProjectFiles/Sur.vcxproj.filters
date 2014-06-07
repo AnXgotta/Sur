@@ -4,7 +4,7 @@
 	<ItemGroup>
 		<None Include="..\..\Sur.uproject" />
 		<Filter Include="Source">
-			<UniqueIdentifier>{C6295AD4-3DF2-4477-9EA7-34E7074EB317}</UniqueIdentifier>
+			<UniqueIdentifier>{A8730786-5176-4148-813D-77E54EB60FD4}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Source\Sur.Target.cs">
 			<Filter>Source</Filter>
@@ -13,7 +13,7 @@
 			<Filter>Source</Filter>
 		</None >
 		<Filter Include="Config">
-			<UniqueIdentifier>{D7976CAE-7A30-4D6F-90AB-96CE6F9F76BD}</UniqueIdentifier>
+			<UniqueIdentifier>{E4B9412D-D9E2-4343-9073-F7493ADEB02F}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Config\DefaultEngine.ini">
 			<Filter>Config</Filter>
@@ -22,7 +22,7 @@
 			<Filter>Config</Filter>
 		</None >
 		<Filter Include="Source\Sur">
-			<UniqueIdentifier>{AE5BF6A9-B545-4D4C-8EC3-FC378A269FFE}</UniqueIdentifier>
+			<UniqueIdentifier>{F94F2895-0D41-4DC2-98DF-0AAE8A3D671B}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Source\Sur\Sur.Build.cs">
 			<Filter>Source\Sur</Filter>
@@ -33,10 +33,34 @@
 		<ClInclude Include="..\..\Source\Sur\Sur.h">
 			<Filter>Source\Sur</Filter>
 		</ClInclude >
+		<ClCompile Include="..\..\Source\Sur\SurCharacter.cpp">
+			<Filter>Source\Sur</Filter>
+		</ClCompile >
+		<ClInclude Include="..\..\Source\Sur\SurCharacter.h">
+			<Filter>Source\Sur</Filter>
+		</ClInclude >
 		<ClCompile Include="..\..\Source\Sur\SurGameMode.cpp">
 			<Filter>Source\Sur</Filter>
 		</ClCompile >
 		<ClInclude Include="..\..\Source\Sur\SurGameMode.h">
+			<Filter>Source\Sur</Filter>
+		</ClInclude >
+		<ClCompile Include="..\..\Source\Sur\SurHUD.cpp">
+			<Filter>Source\Sur</Filter>
+		</ClCompile >
+		<ClInclude Include="..\..\Source\Sur\SurHUD.h">
+			<Filter>Source\Sur</Filter>
+		</ClInclude >
+		<ClCompile Include="..\..\Source\Sur\SurInventorySlot.cpp">
+			<Filter>Source\Sur</Filter>
+		</ClCompile >
+		<ClInclude Include="..\..\Source\Sur\SurInventorySlot.h">
+			<Filter>Source\Sur</Filter>
+		</ClInclude >
+		<ClCompile Include="..\..\Source\Sur\SurItem.cpp">
+			<Filter>Source\Sur</Filter>
+		</ClCompile >
+		<ClInclude Include="..\..\Source\Sur\SurItem.h">
 			<Filter>Source\Sur</Filter>
 		</ClInclude >
 		<ClCompile Include="..\..\Source\Sur\SurPlayerController.cpp">
@@ -45,11 +69,14 @@
 		<ClInclude Include="..\..\Source\Sur\SurPlayerController.h">
 			<Filter>Source\Sur</Filter>
 		</ClInclude >
+		<ClInclude Include="..\..\Source\Sur\SurTypes.h">
+			<Filter>Source\Sur</Filter>
+		</ClInclude >
 		<Filter Include="Source\Sur\Resources">
-			<UniqueIdentifier>{7D7DBA15-647C-4DC5-9244-3FE57D70E13E}</UniqueIdentifier>
+			<UniqueIdentifier>{AC9D571C-60D0-4DE9-8CCA-9ED2BAD89928}</UniqueIdentifier>
 		</Filter>
 		<Filter Include="Source\Sur\Resources\Windows">
-			<UniqueIdentifier>{84FDB1D3-EA0A-4CA5-8600-839689B2B915}</UniqueIdentifier>
+			<UniqueIdentifier>{978F52E5-6BDC-4A31-B9D7-D7A892C0872B}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Source\Sur\Resources\Windows\Sur.ico">
 			<Filter>Source\Sur\Resources\Windows</Filter>

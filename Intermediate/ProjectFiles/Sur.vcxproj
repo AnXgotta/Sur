@@ -52,10 +52,19 @@
 		<None Include="..\..\Source\Sur\Sur.Build.cs" />
 		<ClCompile Include="..\..\Source\Sur\Sur.cpp" />
 		<ClInclude Include="..\..\Source\Sur\Sur.h" />
+		<ClCompile Include="..\..\Source\Sur\SurCharacter.cpp" />
+		<ClInclude Include="..\..\Source\Sur\SurCharacter.h" />
 		<ClCompile Include="..\..\Source\Sur\SurGameMode.cpp" />
 		<ClInclude Include="..\..\Source\Sur\SurGameMode.h" />
+		<ClCompile Include="..\..\Source\Sur\SurHUD.cpp" />
+		<ClInclude Include="..\..\Source\Sur\SurHUD.h" />
+		<ClCompile Include="..\..\Source\Sur\SurInventorySlot.cpp" />
+		<ClInclude Include="..\..\Source\Sur\SurInventorySlot.h" />
+		<ClCompile Include="..\..\Source\Sur\SurItem.cpp" />
+		<ClInclude Include="..\..\Source\Sur\SurItem.h" />
 		<ClCompile Include="..\..\Source\Sur\SurPlayerController.cpp" />
 		<ClInclude Include="..\..\Source\Sur\SurPlayerController.h" />
+		<ClInclude Include="..\..\Source\Sur\SurTypes.h" />
 		<None Include="..\..\Source\Sur\Resources\Windows\Sur.ico" />
 		<ResourceCompile Include="..\..\Source\Sur\Resources\Windows\Sur.rc" />
 	</ItemGroup>
