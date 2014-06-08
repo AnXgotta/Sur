@@ -35,7 +35,7 @@ ASurCharacter::ASurCharacter(const class FPostConstructInitializeProperties& PCI
 	bReplicateMovement = true;
 	bReplicates = true;
 
-	MaxInventorySize = 20;
+	MaxInventorySize = 32;
 
 
 }
@@ -55,9 +55,13 @@ void ASurCharacter::Tick(float DeltaSeconds){
 //  INVENTORY  #########################################################################
 
 void ASurCharacter::InitializeInventory(){
-	for (int i = 0; i < MaxInventorySize; i++){
-		USurInventorySlot* NewSlot = NewObject<USurInventorySlot>();
-		Inventory.Add(NewSlot);
+	for (int i = 0; i < MaxInventorySize/8; i++){
+		for (int k = 0; k < MaxInventorySize / 4; k++){
+			USurInventorySlot* NewSlot = NewObject<USurInventorySlot>();
+			NewSlot->SlotPosition = FVector2D((float)k, (float)i);
+			Inventory.Add(NewSlot);
+		}
+		
 	}
 }
 
@@ -76,14 +80,12 @@ void ASurCharacter::PickUpItem(ASurItem* NewItem){
 		return;
 	}
 
-	// TODO:  see if we can autostack item
-
 
 	// add to next free slot
 	 USurInventorySlot* InventorySlot = GetFirstEmptyInventorySlot();
 
-	if (InventorySlot){
-		InventorySlot->AddItemToSlot(NewItem, 1);
+	if (InventorySlot){		
+		InventorySlot->AddItemToSlot(NewItem);
 		NewItem->ItemPickedUp();
 	}else{
 		PRINT_SCREEN(TEXT("NOTICE:  SSCharacter [PickUpItem] InventorySlot NULL ?!"));
@@ -155,6 +157,21 @@ USurInventorySlot* ASurCharacter::GetFirstEmptyInventorySlot(){
 	return NULL;
 }
 
+USurInventorySlot* ASurCharacter::GetFirstStackableInventorySlot(ASurItem* NewItem){
+	for (int i = 0; i < Inventory.Num(); i++){
+		if (!Inventory[i]->IsSlotEmpty()){
+			if (Inventory[i]->GetItemName() == NewItem->UIName && !Inventory[i]->IsSlotFull()){
+				return Inventory[i];
+			}
+		}
+	}
+	return NULL;
+}
+
+
+int32 ASurCharacter::GetMaxInventorySize(){
+	return MaxInventorySize;
+}
 
 //  INPUT  ################################################################################
 

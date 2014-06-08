@@ -14,7 +14,7 @@ ASurGameMode::ASurGameMode(const class FPostConstructInitializeProperties& PCIP)
 		DefaultPawnClass = (UClass*)PlayerPawnObject.Object->GeneratedClass;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UBlueprint> PlayerHUDObject(TEXT("Blueprint'/Game/HUD/BP_HUD_Test.BP_HUD_Test'"));
+	static ConstructorHelpers::FObjectFinder<UBlueprint> PlayerHUDObject(TEXT("Blueprint'/Game/HUD/Blueprint/BP_HUD_Test.BP_HUD_Test'"));
 	if (PlayerPawnObject.Object != NULL)	{
 		HUDClass = (UClass*)PlayerHUDObject.Object->GeneratedClass;
 	}

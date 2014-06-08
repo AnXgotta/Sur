@@ -102,7 +102,7 @@ class ASurCharacter : public ACharacter
 
 	//  INVENTORY  ##################################################################################
 
-	
+
 
 	// keep tabs on currently selected item (IN BLUEPRINT)
 	UPROPERTY(BlueprintReadWrite, Category = Inventory)
@@ -115,6 +115,9 @@ class ASurCharacter : public ACharacter
 	// max inventory size
 	UPROPERTY(EditDefaultsOnly, Category = Inventory)
 		int32 MaxInventorySize;
+
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+		int32 GetMaxInventorySize();
 
 	// Initialize inventory with SurInventorySlot
 	UFUNCTION()
@@ -150,6 +153,8 @@ class ASurCharacter : public ACharacter
 	UFUNCTION()
 		USurInventorySlot* GetFirstEmptyInventorySlot();
 	
+	UFUNCTION()
+		USurInventorySlot* GetFirstStackableInventorySlot(ASurItem* NewItem);
 
 	//  MOVEMENT  ####################################################################################
 

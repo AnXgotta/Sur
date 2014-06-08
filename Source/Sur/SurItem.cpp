@@ -34,14 +34,8 @@ void ASurItem::BeginPlay(){
 		Mesh->SetSimulatePhysics(true);
 		Mesh->WakeRigidBody();
 	}
-
 }
 
-
-
-FName ASurItem::GetUIName(){
-	return ItemDataUI.UIName;
-}
 
 
 
@@ -49,7 +43,7 @@ FName ASurItem::GetUIName(){
 
 void ASurItem::ItemPickedUp(){
 	SetActorHiddenInGame(true);
-	Mesh->DestroyComponent();
+	//Mesh->DestroyComponent();
 	Destroy();
 }
 
@@ -57,3 +51,18 @@ void ASurItem::ItemDropped(FVector Trajectory){
 	Mesh->AddImpulse(Trajectory * 10000.0f);
 }
 
+
+//  USAGE  #############################################################################
+
+
+void ASurItem::OnItemEquipped(){
+
+}
+
+void ASurItem::OnItemUnEquipped(){
+
+}
+
+void ASurItem::OnUseItem(){
+
+}

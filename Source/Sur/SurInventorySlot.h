@@ -18,6 +18,7 @@ class USurInventorySlot : public UObject
 	UPROPERTY()
 	int32 MaxStackableInSlot;
 
+	TSubclassOf<class AActor> ItemBlueprint;
 
 public:
 
@@ -28,11 +29,22 @@ public:
 	UFUNCTION(BlueprintCallable, Category = ItemSlot)
 		FName GetItemName();
 
+	UFUNCTION(BlueprintCallable, Category = ItemSlot)
+		UTexture* GetItemDisplayTexture();
+
+	UPROPERTY()
+		UTexture* ItemDisplayTexture;
+
 	// Number Stacked
 	UPROPERTY()
 		int32 NumberItemsStacked;
 
-	TSubclassOf<class AActor> ItemBlueprint;
+	UPROPERTY()
+		FVector2D SlotPosition;
+
+	UFUNCTION(BlueprintCallable, Category = ItemSlot)
+		FVector2D GetSlotPosition();
+	
 
 
 	//  ADD ITEM HELPERS  #####################################################################
@@ -40,7 +52,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category=ItemSlot)
 		bool IsSlotEmpty();
 
-	
+	UFUNCTION(BlueprintCallable, Category = ItemSlot)
+		bool IsSlotFull();
 
 
 
@@ -48,7 +61,7 @@ public:
 
 	// Add item to inventory slot
 	UFUNCTION(BlueprintCallable, Category = ItemSlot)
-		int32 AddItemToSlot(ASurItem* NewItem, int32 Count);
+		int32 AddItemToSlot(ASurItem* NewItem);
 
 
 	//  REMOVE ITEM  ##########################################################################

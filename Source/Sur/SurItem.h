@@ -6,25 +6,6 @@
 #include "SurItem.generated.h"
 
 
-USTRUCT()
-struct FItemUIData{
-
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY(EditDefaultsOnly, Category = Name)
-	FName UIName;
-
-	UPROPERTY(EditDefaultsOnly, Category = Stack)
-		int32 MaxStackable;
-
-	// defaults
-	FItemUIData(){
-		UIName = TEXT("Change Me in BP");
-		MaxStackable = 1;
-
-	}
-};
-
 UCLASS()
 class ASurItem : public AActor
 {
@@ -44,9 +25,22 @@ public:
 
 	TSubclassOf<class AActor> SurItemBlueprint;
 
-	// getter for UI Data
-	UFUNCTION(BlueprintCallable, Category = Item)
-		FName GetUIName();
+	//  CONFIGURATION  ##################################################################
+
+	UPROPERTY(EditDefaultsOnly, Category = Configuration)
+		FName UIName;
+
+	UPROPERTY(EditDefaultsOnly, Category = Configuration)
+		UTexture* UITexture;
+
+	UPROPERTY(EditDefaultsOnly, Category = Configuration)
+		int32 CurrentItemCount;
+
+	UPROPERTY(EditDefaultsOnly, Category = Configuration)
+		int32 MaxStackable;
+
+
+
 
 
 	//  INVENTORY  ##########################################################################
@@ -60,10 +54,16 @@ public:
 		virtual void ItemDropped(FVector Trajectory);
 
 
+	UFUNCTION()
+		virtual void OnItemEquipped();
+
+	UFUNCTION()
+		virtual void OnItemUnEquipped();
+
+	UFUNCTION()
+		virtual void OnUseItem();
+
 protected:
 
-	// Hold data for UI
-	UPROPERTY(EditDefaultsOnly, Category = Data)
-		FItemUIData ItemDataUI;
 	
 };
