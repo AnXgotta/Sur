@@ -8,13 +8,22 @@ USurInventorySlot::USurInventorySlot(const class FPostConstructInitializePropert
 	: Super(PCIP)
 {
 	MaxStackableInSlot = 50;
-	ItemDisplayName = FName(TEXT(""));
+	ItemDisplayName = TEXT("NULL");
 	NumberItemsStacked = 0;
 
 	ItemBlueprint = NULL;
 
 }
 
+
+FName USurInventorySlot::GetItemName(){
+	if (!IsSlotEmpty()){
+		if (ItemDisplayName != TEXT("NULL")){
+			return ItemDisplayName;
+		}
+	}
+	return TEXT("");
+}
 
 bool USurInventorySlot::IsSlotEmpty(){
 	return NumberItemsStacked == 0 ? true : false;
@@ -23,7 +32,7 @@ bool USurInventorySlot::IsSlotEmpty(){
 
 int32  USurInventorySlot::AddItemToSlot(ASurItem* NewItem, int32 Count){
 	// if no name (empty slot) add name
-	if (ItemDisplayName == TEXT("")){
+	if (ItemDisplayName == TEXT("NULL")){
 		ItemDisplayName = FName(NewItem->GetUIName());
 	}
 
@@ -49,6 +58,6 @@ void USurInventorySlot::RemoveItemFromSlot(int32 Count){
 	--NumberItemsStacked;
 	if (NumberItemsStacked <= 0){
 		NumberItemsStacked = 0;
-		ItemDisplayName = TEXT("");
+		ItemDisplayName = TEXT("NULL");
 	}
 }

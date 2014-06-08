@@ -25,6 +25,9 @@ public:
 	UPROPERTY()
 		FName ItemDisplayName;
 
+	UFUNCTION(BlueprintCallable, Category = ItemSlot)
+		FName GetItemName();
+
 	// Number Stacked
 	UPROPERTY()
 		int32 NumberItemsStacked;
@@ -34,8 +37,10 @@ public:
 
 	//  ADD ITEM HELPERS  #####################################################################
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category=ItemSlot)
 		bool IsSlotEmpty();
+
+	
 
 
 

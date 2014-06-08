@@ -128,6 +128,9 @@ class ASurCharacter : public ACharacter
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 		void TestDropFirstItem();
 
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+		TArray<USurInventorySlot* > GetInventory();
+
 	// ############################ END TESTING
 
 

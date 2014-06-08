@@ -54,7 +54,6 @@ void ASurItem::ItemPickedUp(){
 }
 
 void ASurItem::ItemDropped(FVector Trajectory){
-
-	Mesh->AddForce(Trajectory * 100.0f);
+	Mesh->AddImpulse(Trajectory * 10000.0f);
 }
 

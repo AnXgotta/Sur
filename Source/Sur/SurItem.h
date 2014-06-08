@@ -20,7 +20,7 @@ struct FItemUIData{
 	// defaults
 	FItemUIData(){
 		UIName = TEXT("Change Me in BP");
-		MaxStackable = 0;
+		MaxStackable = 1;
 
 	}
 };

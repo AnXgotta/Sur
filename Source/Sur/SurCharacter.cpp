@@ -92,7 +92,7 @@ void ASurCharacter::PickUpItem(ASurItem* NewItem){
 
 }
 
-
+//  ################################################## TESTING
 void ASurCharacter::TestDropFirstItem(){
 	for (int i = 0; i < MaxInventorySize; i++){
 		if (!Inventory[i]->IsSlotEmpty()){
@@ -104,6 +104,11 @@ void ASurCharacter::TestDropFirstItem(){
 
 }
 
+TArray<USurInventorySlot* > ASurCharacter::GetInventory(){
+	return Inventory;
+}
+
+//  #######################################################  END TESTING
 
 void ASurCharacter::RemoveItemFromInventory(USurInventorySlot* RemoveItemSlot){
 	if (RemoveItemSlot){
