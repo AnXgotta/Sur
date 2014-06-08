@@ -109,7 +109,10 @@ class ASurCharacter : public ACharacter
 
 	// keep tabs on currently selected item (IN BLUEPRINT)
 	UPROPERTY(BlueprintReadWrite, Category = Inventory)
-		ASurItem* CurrentlyTracedItem;	
+		ASurItem* CurrentlyTracedItem;
+
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+		TArray<USurInventorySlot*> GetInventory();
 
 	// add item to inventory (IN BLUEPRINT)
 	UFUNCTION(BlueprintCallable, Category = Inventory)
@@ -119,12 +122,20 @@ class ASurCharacter : public ACharacter
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 		void DropItem(USurInventorySlot* OldItemSlot);
 
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+		void EquipItem(USurInventorySlot* EquipItemSlot);
+
+	// TESTING  ##############################################################################
 	// drop item from inventory
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 		void TestingDropFirstItem();
 
 	UFUNCTION(BlueprintCallable, Category = Inventory)
-		TArray<USurInventorySlot*> GetInventory();
+		void TestingEquipItem();
+
+	// END TESTING  ##########################################################################
+
+	
 
 	//  MOVEMENT  ####################################################################################
 

@@ -56,11 +56,13 @@ void ASurItem::ItemDropped(FVector Trajectory){
 
 
 void ASurItem::OnItemEquipped(){
-
+	Mesh->SetSimulatePhysics(false);
+	Mesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 }
 
 void ASurItem::OnItemUnEquipped(){
-
+	Mesh->SetSimulatePhysics(true);
+	Mesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
 }
 
 void ASurItem::OnUseItem(){

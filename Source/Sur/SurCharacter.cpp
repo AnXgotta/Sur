@@ -53,7 +53,9 @@ void ASurCharacter::Tick(float DeltaSeconds){
 
 //  INVENTORY  #########################################################################
 
-
+TArray<USurInventorySlot*> ASurCharacter::GetInventory(){
+	return Inventory->Inventory;
+}
 
 void ASurCharacter::PickUpItem(){
 	if (!CurrentlyTracedItem){
@@ -66,7 +68,44 @@ void ASurCharacter::PickUpItem(){
 	}
 }
 
+void ASurCharacter::DropItem(USurInventorySlot* OldItemSlot){
+	if (!OldItemSlot) return;
 
+	FVector CameraLocation = FirstPersonCameraComponent.Get()->GetComponentLocation();
+	FVector CameraForward = FirstPersonCameraComponent.Get()->GetForwardVector();
+
+	UWorld* const World = GetWorld();
+	if (World){
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Instigator = this;
+		ASurItem* DroppedItem = World->SpawnActor<ASurItem>(OldItemSlot->ItemBlueprint, CameraLocation + (CameraForward * 100.0f), FRotator(0.0f, 0.0f, 0.0f), SpawnParams);
+		if (DroppedItem){
+			Inventory->RemoveItem(OldItemSlot);
+			DroppedItem->ItemDropped(CameraForward);
+		}
+	}
+
+}
+
+void ASurCharacter::EquipItem(USurInventorySlot* EquipItemSlot){
+	if (!EquipItemSlot) return;
+	if (!Mesh1P) return;
+
+	UWorld* const World = GetWorld();
+	if (World){
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Instigator = this;
+		ASurItem* EquippedItem = World->SpawnActor<ASurItem>(EquipItemSlot->ItemBlueprint, Mesh1P->GetSocketLocation("RIGHT_HAND_SOCKET"), Mesh1P->GetSocketRotation("RIGHT_HAND_SOCKET"));
+		if (EquippedItem){
+			EquippedItem->OnItemEquipped();
+			EquippedItem->Mesh->AttachTo(Mesh1P, "RIGHT_HAND_SOCKET", EAttachLocation::SnapToTarget);
+			PRINT_SCREEN("SurCharacter [EquipItem]  Fully Equipped");
+		}
+	}
+
+}
+
+//  TESTING ################################################################
 void ASurCharacter::TestingDropFirstItem(){
 	for (int i = 0; i < Inventory->MaxSize; i++){
 		if (!Inventory->Inventory[i]->IsSlotEmpty()){
@@ -76,28 +115,16 @@ void ASurCharacter::TestingDropFirstItem(){
 	}
 }
 
-TArray<USurInventorySlot*> ASurCharacter::GetInventory(){
-	return Inventory->Inventory;
-}
-
-void ASurCharacter::DropItem(USurInventorySlot* OldItemSlot){
-	if (OldItemSlot){
-		FVector CameraLocation = FirstPersonCameraComponent.Get()->GetComponentLocation();
-		FVector CameraForward = FirstPersonCameraComponent.Get()->GetForwardVector();
-
-		UWorld* const World = GetWorld();
-		if (World){
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Instigator = this;
-			ASurItem* DroppedItem = World->SpawnActor<ASurItem>(OldItemSlot->ItemBlueprint, CameraLocation + (CameraForward * 100.0f), FRotator(0.0f, 0.0f, 0.0f), SpawnParams);
-			if (DroppedItem){
-				Inventory->RemoveItem(OldItemSlot);
-				DroppedItem->ItemDropped(CameraForward);
-			}
+void ASurCharacter::TestingEquipItem(){
+	for (int i = 0; i < Inventory->MaxSize; i++){
+		if (!Inventory->Inventory[i]->IsSlotEmpty()){
+			EquipItem(Inventory->Inventory[i]);
+			return;
 		}
-
 	}
 }
+
+//  END TESTING  ###########################################################
 
 
 //  INPUT  ################################################################################
