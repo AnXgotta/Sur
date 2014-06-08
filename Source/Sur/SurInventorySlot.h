@@ -47,7 +47,7 @@ public:
 	
 
 
-	//  ADD ITEM HELPERS  #####################################################################
+	//  HELPERS  #####################################################################
 
 	UFUNCTION(BlueprintCallable, Category=ItemSlot)
 		bool IsSlotEmpty();
@@ -55,6 +55,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = ItemSlot)
 		bool IsSlotFull();
 
+	UFUNCTION(BlueprintCallable, Category = ItemSlot)
+		int32 GetNumberItemsStacked();
+
+	UFUNCTION()
+		int32 SpaceRemaining();
+
+	UFUNCTION()
+		void ClearSlotInformation();
+
+	UFUNCTION()
+		void SetSlotInformation(ASurItem* NewItem);
 
 
 	//  ADD ITEM  ##############################################################################

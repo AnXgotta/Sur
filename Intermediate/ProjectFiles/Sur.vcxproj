@@ -49,6 +49,7 @@
 		<None Include="..\..\Source\SurEditor.Target.cs" />
 		<None Include="..\..\Config\DefaultEngine.ini" />
 		<None Include="..\..\Config\DefaultGame.ini" />
+		<None Include="..\..\Config\DefaultInput.ini" />
 		<None Include="..\..\Source\Sur\Sur.Build.cs" />
 		<ClCompile Include="..\..\Source\Sur\Sur.cpp" />
 		<ClInclude Include="..\..\Source\Sur\Sur.h" />
@@ -58,6 +59,8 @@
 		<ClInclude Include="..\..\Source\Sur\SurGameMode.h" />
 		<ClCompile Include="..\..\Source\Sur\SurHUD.cpp" />
 		<ClInclude Include="..\..\Source\Sur\SurHUD.h" />
+		<ClCompile Include="..\..\Source\Sur\SurInventory.cpp" />
+		<ClInclude Include="..\..\Source\Sur\SurInventory.h" />
 		<ClCompile Include="..\..\Source\Sur\SurInventorySlot.cpp" />
 		<ClInclude Include="..\..\Source\Sur\SurInventorySlot.h" />
 		<ClCompile Include="..\..\Source\Sur\SurItem.cpp" />

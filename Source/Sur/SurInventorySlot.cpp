@@ -34,6 +34,8 @@ UTexture* USurInventorySlot::GetItemDisplayTexture(){
 }
 
 
+//  HELPERS  ###################################################################
+
 bool USurInventorySlot::IsSlotEmpty(){
 	return NumberItemsStacked == 0 ? true : false;
 }
@@ -42,8 +44,15 @@ bool USurInventorySlot::IsSlotFull(){
 	return NumberItemsStacked == MaxStackableInSlot;
 }
 
+void USurInventorySlot::ClearSlotInformation(){
+	NumberItemsStacked = 0;
+	MaxStackableInSlot = -1;
+	ItemDisplayName = TEXT("NULL");
+	ItemBlueprint = NULL;
+	ItemDisplayTexture = NULL;
+}
 
-int32  USurInventorySlot::AddItemToSlot(ASurItem* NewItem){
+void USurInventorySlot::SetSlotInformation(ASurItem* NewItem){
 	// if no name (empty slot) add name
 	if (ItemDisplayName == TEXT("NULL")){
 		ItemDisplayName = FName(NewItem->UIName);
@@ -60,28 +69,39 @@ int32  USurInventorySlot::AddItemToSlot(ASurItem* NewItem){
 	if (MaxStackableInSlot < 0){
 		MaxStackableInSlot = NewItem->MaxStackable;
 	}
+}
+
+int32 USurInventorySlot::GetNumberItemsStacked(){
+	return NumberItemsStacked;
+}
+
+int32 USurInventorySlot::SpaceRemaining(){
+	return MaxStackableInSlot - NumberItemsStacked;
+}
+
+
+
+int32  USurInventorySlot::AddItemToSlot(ASurItem* NewItem){
+	
+	SetSlotInformation(NewItem);
 
 	// check for overflow items on drag and drop stacking
 	int32 OverflowItemCount = 0;
 	if ((NumberItemsStacked + NewItem->CurrentItemCount) > MaxStackableInSlot){
-		OverflowItemCount = (NumberItemsStacked + NewItem->CurrentItemCount) - MaxStackableInSlot;
+		OverflowItemCount = FMath::Max((NumberItemsStacked + NewItem->CurrentItemCount) - MaxStackableInSlot, 0);
 		NumberItemsStacked = MaxStackableInSlot;
-	}
-	else{
+	}else{
 		NumberItemsStacked += NewItem->CurrentItemCount;
 	}
 
 	return OverflowItemCount;
 }
 
-
 void USurInventorySlot::RemoveItemFromSlot(int32 Count){
 	--NumberItemsStacked;
 	if (NumberItemsStacked <= 0){
-		NumberItemsStacked = 0;
-		MaxStackableInSlot = -1;
-		ItemDisplayName = TEXT("NULL");
-		ItemBlueprint = NULL;
-		ItemDisplayTexture = NULL;
+		ClearSlotInformation();
 	}
 }
+
+

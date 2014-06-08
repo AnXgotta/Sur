@@ -35,14 +35,13 @@ ASurCharacter::ASurCharacter(const class FPostConstructInitializeProperties& PCI
 	bReplicateMovement = true;
 	bReplicates = true;
 
-	MaxInventorySize = 32;
-
-
 }
 
 
 void ASurCharacter::BeginPlay(){
-	InitializeInventory();
+	Inventory = NewObject<USurInventory>();
+	Inventory->Initialize();
+	Super::BeginPlay();	
 }
 
 
@@ -54,73 +53,35 @@ void ASurCharacter::Tick(float DeltaSeconds){
 
 //  INVENTORY  #########################################################################
 
-void ASurCharacter::InitializeInventory(){
-	for (int i = 0; i < MaxInventorySize/8; i++){
-		for (int k = 0; k < MaxInventorySize / 4; k++){
-			USurInventorySlot* NewSlot = NewObject<USurInventorySlot>();
-			NewSlot->SlotPosition = FVector2D((float)k, (float)i);
-			Inventory.Add(NewSlot);
-		}
-		
+
+
+void ASurCharacter::PickUpItem(){
+	if (!CurrentlyTracedItem){
+		PRINT_SCREEN("SurCharacter:  [PickUpItem]  No Item Traced!");
+		return;
+	}
+	if (!Inventory->AddItem(CurrentlyTracedItem)){
+		// most likely inventory is full... or an error of some kind
+		PRINT_SCREEN("SurCharacter:  [PickUpItem]  Inventory Full!");
 	}
 }
 
 
-void ASurCharacter::PickUpItem(ASurItem* NewItem){
-
-	if (!NewItem){
-		PRINT_SCREEN(TEXT("NOTICE:  SSCharacter [PickUpItem] NewItem NULL"));
-		return;
-	}
-
-	// check if inventory is full
-	if (IsInventoryFull()){
-		// see if we can autostack item ??
-		PRINT_SCREEN(TEXT("NOTICE:  SSCharacter [PickUpItem] Inventory Full"));
-		return;
-	}
-
-
-	// add to next free slot
-	 USurInventorySlot* InventorySlot = GetFirstEmptyInventorySlot();
-
-	if (InventorySlot){		
-		InventorySlot->AddItemToSlot(NewItem);
-		NewItem->ItemPickedUp();
-	}else{
-		PRINT_SCREEN(TEXT("NOTICE:  SSCharacter [PickUpItem] InventorySlot NULL ?!"));
-		// shouldent happen as empty slot should exist due to previous empty check
-	}
-
-}
-
-//  ################################################## TESTING
-void ASurCharacter::TestDropFirstItem(){
-	for (int i = 0; i < MaxInventorySize; i++){
-		if (!Inventory[i]->IsSlotEmpty()){
-			DropItem(Inventory[i]);
-			RemoveItemFromInventory(Inventory[i]);
+void ASurCharacter::TestingDropFirstItem(){
+	for (int i = 0; i < Inventory->MaxSize; i++){
+		if (!Inventory->Inventory[i]->IsSlotEmpty()){
+			DropItem(Inventory->Inventory[i]);
 			return;
 		}
 	}
-
 }
 
-TArray<USurInventorySlot* > ASurCharacter::GetInventory(){
-	return Inventory;
+TArray<USurInventorySlot*> ASurCharacter::GetInventory(){
+	return Inventory->Inventory;
 }
 
-//  #######################################################  END TESTING
-
-void ASurCharacter::RemoveItemFromInventory(USurInventorySlot* RemoveItemSlot){
-	if (RemoveItemSlot){
-		RemoveItemSlot->RemoveItemFromSlot(1);
-	}
-}
-
-
-void ASurCharacter::DropItem(USurInventorySlot* DropItemSlot){
-	if (DropItemSlot){
+void ASurCharacter::DropItem(USurInventorySlot* OldItemSlot){
+	if (OldItemSlot){
 		FVector CameraLocation = FirstPersonCameraComponent.Get()->GetComponentLocation();
 		FVector CameraForward = FirstPersonCameraComponent.Get()->GetForwardVector();
 
@@ -128,8 +89,9 @@ void ASurCharacter::DropItem(USurInventorySlot* DropItemSlot){
 		if (World){
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Instigator = this;
-			ASurItem* DroppedItem = World->SpawnActor<ASurItem>(DropItemSlot->ItemBlueprint, CameraLocation + (CameraForward * 100.0f), FRotator(0.0f, 0.0f, 0.0f), SpawnParams);
+			ASurItem* DroppedItem = World->SpawnActor<ASurItem>(OldItemSlot->ItemBlueprint, CameraLocation + (CameraForward * 100.0f), FRotator(0.0f, 0.0f, 0.0f), SpawnParams);
 			if (DroppedItem){
+				Inventory->RemoveItem(OldItemSlot);
 				DroppedItem->ItemDropped(CameraForward);
 			}
 		}
@@ -137,41 +99,6 @@ void ASurCharacter::DropItem(USurInventorySlot* DropItemSlot){
 	}
 }
 
-
-bool ASurCharacter::IsInventoryFull(){
-	for (int i = 0; i < Inventory.Num(); i++){
-		if (Inventory[i]->IsSlotEmpty()){
-			return false;
-		}
-	}
-	return true;
-}
-
-
-USurInventorySlot* ASurCharacter::GetFirstEmptyInventorySlot(){
-	for (int i = 0; i < Inventory.Num(); i++){
-		if (Inventory[i]->IsSlotEmpty()){
-			return Inventory[i];
-		}
-	}
-	return NULL;
-}
-
-USurInventorySlot* ASurCharacter::GetFirstStackableInventorySlot(ASurItem* NewItem){
-	for (int i = 0; i < Inventory.Num(); i++){
-		if (!Inventory[i]->IsSlotEmpty()){
-			if (Inventory[i]->GetItemName() == NewItem->UIName && !Inventory[i]->IsSlotFull()){
-				return Inventory[i];
-			}
-		}
-	}
-	return NULL;
-}
-
-
-int32 ASurCharacter::GetMaxInventorySize(){
-	return MaxInventorySize;
-}
 
 //  INPUT  ################################################################################
 

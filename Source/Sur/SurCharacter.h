@@ -4,10 +4,8 @@
 
 
 #include "GameFramework/Character.h"
-
-#include "SurInventorySlot.h"
 #include "SurItem.h"
-
+#include "SurInventory.h"
 #include "SurCharacter.generated.h"
 
 USTRUCT()
@@ -68,6 +66,9 @@ class ASurCharacter : public ACharacter
 	UPROPERTY()
 		FSSPlayerHealthStatus PlayerStatus;
 
+	// keep tabs on currently selected item (IN BLUEPRINT)
+	UPROPERTY(BlueprintReadWrite, Category = Inventory)
+		ASurItem* CurrentRightHandItem;
 
 	//  HEALTH  #####################################################################################
 
@@ -100,61 +101,30 @@ class ASurCharacter : public ACharacter
 
 
 
+
 	//  INVENTORY  ##################################################################################
 
-
+	UPROPERTY()
+		USurInventory* Inventory;
 
 	// keep tabs on currently selected item (IN BLUEPRINT)
 	UPROPERTY(BlueprintReadWrite, Category = Inventory)
-		ASurItem* CurrentlyTracedItem;
-	
-	// player inventory
-	UPROPERTY()
-		TArray<USurInventorySlot* > Inventory;
-
-	// max inventory size
-	UPROPERTY(EditDefaultsOnly, Category = Inventory)
-		int32 MaxInventorySize;
-
-	UFUNCTION(BlueprintCallable, Category = Inventory)
-		int32 GetMaxInventorySize();
-
-	// Initialize inventory with SurInventorySlot
-	UFUNCTION()
-		void InitializeInventory();
+		ASurItem* CurrentlyTracedItem;	
 
 	// add item to inventory (IN BLUEPRINT)
 	UFUNCTION(BlueprintCallable, Category = Inventory)
-		void PickUpItem(ASurItem* NewItem);
-
-	// ############################ TESTING
-	UFUNCTION(BlueprintCallable, Category = Inventory)
-		void TestDropFirstItem();
-
-	UFUNCTION(BlueprintCallable, Category = Inventory)
-		TArray<USurInventorySlot* > GetInventory();
-
-	// ############################ END TESTING
-
-
-	// remove item from inventory (IN BLUEPRINT)
-	UFUNCTION(BlueprintCallable, Category = Inventory)
-		void RemoveItemFromInventory(USurInventorySlot* RemoveItemSlot);
+		void PickUpItem();
 
 	// drop item from inventory
 	UFUNCTION(BlueprintCallable, Category = Inventory)
-		void DropItem(USurInventorySlot* DropItem);
+		void DropItem(USurInventorySlot* OldItemSlot);
 
-	// check if inventory full
-	UFUNCTION()
-		bool IsInventoryFull();
+	// drop item from inventory
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+		void TestingDropFirstItem();
 
-	// get first empty inventory slot
-	UFUNCTION()
-		USurInventorySlot* GetFirstEmptyInventorySlot();
-	
-	UFUNCTION()
-		USurInventorySlot* GetFirstStackableInventorySlot(ASurItem* NewItem);
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+		TArray<USurInventorySlot*> GetInventory();
 
 	//  MOVEMENT  ####################################################################################
 

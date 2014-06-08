@@ -4,7 +4,7 @@
 	<ItemGroup>
 		<None Include="..\..\Sur.uproject" />
 		<Filter Include="Source">
-			<UniqueIdentifier>{A8730786-5176-4148-813D-77E54EB60FD4}</UniqueIdentifier>
+			<UniqueIdentifier>{B02C5AC0-081F-404F-80FA-8F04AA9871A2}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Source\Sur.Target.cs">
 			<Filter>Source</Filter>
@@ -13,7 +13,7 @@
 			<Filter>Source</Filter>
 		</None >
 		<Filter Include="Config">
-			<UniqueIdentifier>{E4B9412D-D9E2-4343-9073-F7493ADEB02F}</UniqueIdentifier>
+			<UniqueIdentifier>{D7E5CBC1-2E58-497F-AB01-B4CC75FBC79D}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Config\DefaultEngine.ini">
 			<Filter>Config</Filter>
@@ -21,8 +21,11 @@
 		<None Include="..\..\Config\DefaultGame.ini">
 			<Filter>Config</Filter>
 		</None >
+		<None Include="..\..\Config\DefaultInput.ini">
+			<Filter>Config</Filter>
+		</None >
 		<Filter Include="Source\Sur">
-			<UniqueIdentifier>{F94F2895-0D41-4DC2-98DF-0AAE8A3D671B}</UniqueIdentifier>
+			<UniqueIdentifier>{5C06AB81-753A-458E-A6A1-6BCA5E8E0156}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Source\Sur\Sur.Build.cs">
 			<Filter>Source\Sur</Filter>
@@ -51,6 +54,12 @@
 		<ClInclude Include="..\..\Source\Sur\SurHUD.h">
 			<Filter>Source\Sur</Filter>
 		</ClInclude >
+		<ClCompile Include="..\..\Source\Sur\SurInventory.cpp">
+			<Filter>Source\Sur</Filter>
+		</ClCompile >
+		<ClInclude Include="..\..\Source\Sur\SurInventory.h">
+			<Filter>Source\Sur</Filter>
+		</ClInclude >
 		<ClCompile Include="..\..\Source\Sur\SurInventorySlot.cpp">
 			<Filter>Source\Sur</Filter>
 		</ClCompile >
@@ -73,10 +82,10 @@
 			<Filter>Source\Sur</Filter>
 		</ClInclude >
 		<Filter Include="Source\Sur\Resources">
-			<UniqueIdentifier>{AC9D571C-60D0-4DE9-8CCA-9ED2BAD89928}</UniqueIdentifier>
+			<UniqueIdentifier>{6DEB0D1B-3B21-4BAD-A880-C80FCDBF9C88}</UniqueIdentifier>
 		</Filter>
 		<Filter Include="Source\Sur\Resources\Windows">
-			<UniqueIdentifier>{978F52E5-6BDC-4A31-B9D7-D7A892C0872B}</UniqueIdentifier>
+			<UniqueIdentifier>{F2272C9B-9EBA-4B8F-B60F-D9ECF67AD579}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Source\Sur\Resources\Windows\Sur.ico">
 			<Filter>Source\Sur\Resources\Windows</Filter>

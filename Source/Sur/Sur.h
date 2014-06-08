@@ -4,4 +4,5 @@
 
 #include "Engine.h"
 
-#define PRINT_SCREEN(text) GEngine->AddOnScreenDebugMessage(-1, 10, FColor::White,text)
+#define PRINT_SCREEN(arg0) GEngine->AddOnScreenDebugMessage(-1, 10, FColor::White,arg0)
+
