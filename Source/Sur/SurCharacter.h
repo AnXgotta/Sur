@@ -60,7 +60,7 @@ class ASurCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		float BaseLookUpRate;
 
-	
+	virtual void BeginPlay() OVERRIDE;
 	virtual void Tick(float DeltaSeconds) OVERRIDE;
 
 	// PLAYER STATUS ##############################################################################
@@ -102,6 +102,8 @@ class ASurCharacter : public ACharacter
 
 	//  INVENTORY  ##################################################################################
 
+	
+
 	// keep tabs on currently selected item (IN BLUEPRINT)
 	UPROPERTY(BlueprintReadWrite, Category = Inventory)
 		ASurItem* CurrentlyTracedItem;
@@ -114,9 +116,20 @@ class ASurCharacter : public ACharacter
 	UPROPERTY(EditDefaultsOnly, Category = Inventory)
 		int32 MaxInventorySize;
 
+	// Initialize inventory with SurInventorySlot
+	UFUNCTION()
+		void InitializeInventory();
+
 	// add item to inventory (IN BLUEPRINT)
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 		void PickUpItem(ASurItem* NewItem);
+
+	// ############################ TESTING
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+		void TestDropFirstItem();
+
+	// ############################ END TESTING
+
 
 	// remove item from inventory (IN BLUEPRINT)
 	UFUNCTION(BlueprintCallable, Category = Inventory)

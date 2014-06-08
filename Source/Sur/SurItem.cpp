@@ -20,6 +20,12 @@ ASurItem::ASurItem(const class FPostConstructInitializeProperties& PCIP)
 
 	bReplicateMovement = true;
 	bReplicates = true;
+
+	static ConstructorHelpers::FObjectFinder<UBlueprint> ItemBlueprint(TEXT("Blueprint'/Game/Items/Blueprints/BP_ItemTest.BP_ItemTest'"));
+	if (ItemBlueprint.Object){
+		SurItemBlueprint = (UClass*)ItemBlueprint.Object->GeneratedClass;
+	}
+
 }
 
 void ASurItem::BeginPlay(){
@@ -28,11 +34,15 @@ void ASurItem::BeginPlay(){
 		Mesh->SetSimulatePhysics(true);
 		Mesh->WakeRigidBody();
 	}
+
 }
 
+
+
 FName ASurItem::GetUIName(){
-	return ItemUIData.UIName;
+	return ItemDataUI.UIName;
 }
+
 
 
 //  INVENTORY  ##########################################################################
@@ -43,7 +53,8 @@ void ASurItem::ItemPickedUp(){
 	Destroy();
 }
 
-
 void ASurItem::ItemDropped(FVector Trajectory){
+
 	Mesh->AddForce(Trajectory * 100.0f);
 }
+

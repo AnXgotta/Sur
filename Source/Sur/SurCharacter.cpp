@@ -35,11 +35,16 @@ ASurCharacter::ASurCharacter(const class FPostConstructInitializeProperties& PCI
 	bReplicateMovement = true;
 	bReplicates = true;
 
-
-	
+	MaxInventorySize = 20;
 
 
 }
+
+
+void ASurCharacter::BeginPlay(){
+	InitializeInventory();
+}
+
 
 void ASurCharacter::Tick(float DeltaSeconds){
 	Super::Tick(DeltaSeconds);
@@ -48,6 +53,14 @@ void ASurCharacter::Tick(float DeltaSeconds){
 
 
 //  INVENTORY  #########################################################################
+
+void ASurCharacter::InitializeInventory(){
+	for (int i = 0; i < MaxInventorySize; i++){
+		USurInventorySlot* NewSlot = NewObject<USurInventorySlot>();
+		Inventory.Add(NewSlot);
+	}
+}
+
 
 void ASurCharacter::PickUpItem(ASurItem* NewItem){
 
@@ -63,20 +76,30 @@ void ASurCharacter::PickUpItem(ASurItem* NewItem){
 		return;
 	}
 
-	USurInventorySlot* InventorySlot = NULL;
+	// TODO:  see if we can autostack item
 
-	// see if we can autostack item
 
 	// add to next free slot
-	InventorySlot = GetFirstEmptyInventorySlot();
+	 USurInventorySlot* InventorySlot = GetFirstEmptyInventorySlot();
 
 	if (InventorySlot){
 		InventorySlot->AddItemToSlot(NewItem, 1);
 		NewItem->ItemPickedUp();
-	}
-	else{
+	}else{
 		PRINT_SCREEN(TEXT("NOTICE:  SSCharacter [PickUpItem] InventorySlot NULL ?!"));
 		// shouldent happen as empty slot should exist due to previous empty check
+	}
+
+}
+
+
+void ASurCharacter::TestDropFirstItem(){
+	for (int i = 0; i < MaxInventorySize; i++){
+		if (!Inventory[i]->IsSlotEmpty()){
+			DropItem(Inventory[i]);
+			RemoveItemFromInventory(Inventory[i]);
+			return;
+		}
 	}
 
 }
@@ -98,7 +121,7 @@ void ASurCharacter::DropItem(USurInventorySlot* DropItemSlot){
 		if (World){
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Instigator = this;
-			ASurItem* DroppedItem = World->SpawnActor<ASurItem>(DropItemSlot->ItemClass, CameraLocation + (CameraForward * 100.0f), FRotator(0.0f, 0.0f, 0.0f), SpawnParams);
+			ASurItem* DroppedItem = World->SpawnActor<ASurItem>(DropItemSlot->ItemBlueprint, CameraLocation + (CameraForward * 100.0f), FRotator(0.0f, 0.0f, 0.0f), SpawnParams);
 			if (DroppedItem){
 				DroppedItem->ItemDropped(CameraForward);
 			}
@@ -110,7 +133,7 @@ void ASurCharacter::DropItem(USurInventorySlot* DropItemSlot){
 
 bool ASurCharacter::IsInventoryFull(){
 	for (int i = 0; i < Inventory.Num(); i++){
-		if (!Inventory[i]->IsSlotEmpty()){
+		if (Inventory[i]->IsSlotEmpty()){
 			return false;
 		}
 	}
@@ -120,7 +143,7 @@ bool ASurCharacter::IsInventoryFull(){
 
 USurInventorySlot* ASurCharacter::GetFirstEmptyInventorySlot(){
 	for (int i = 0; i < Inventory.Num(); i++){
-		if (!Inventory[i]->IsSlotEmpty()){
+		if (Inventory[i]->IsSlotEmpty()){
 			return Inventory[i];
 		}
 	}

@@ -25,13 +25,11 @@ public:
 	UPROPERTY()
 		FName ItemDisplayName;
 
-	// Item Class
-	UPROPERTY()
-		TSubclassOf<class ASurItem > ItemClass;
-
 	// Number Stacked
 	UPROPERTY()
 		int32 NumberItemsStacked;
+
+	TSubclassOf<class AActor> ItemBlueprint;
 
 
 	//  ADD ITEM HELPERS  #####################################################################

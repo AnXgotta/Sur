@@ -8,9 +8,11 @@ USurInventorySlot::USurInventorySlot(const class FPostConstructInitializePropert
 	: Super(PCIP)
 {
 	MaxStackableInSlot = 50;
-	ItemDisplayName = TEXT("");
-	ItemClass = NULL;
+	ItemDisplayName = FName(TEXT(""));
 	NumberItemsStacked = 0;
+
+	ItemBlueprint = NULL;
+
 }
 
 
@@ -22,12 +24,11 @@ bool USurInventorySlot::IsSlotEmpty(){
 int32  USurInventorySlot::AddItemToSlot(ASurItem* NewItem, int32 Count){
 	// if no name (empty slot) add name
 	if (ItemDisplayName == TEXT("")){
-		ItemDisplayName = NewItem->GetUIName();
+		ItemDisplayName = FName(NewItem->GetUIName());
 	}
 
-	// if no class (empty slot) add class
-	if (!ItemClass){
-		ItemClass = NewItem->StaticClass();
+	if (!ItemBlueprint){
+		ItemBlueprint = NewItem->SurItemBlueprint;
 	}
 
 	// check for overflow items on drag and drop stacking
@@ -49,6 +50,5 @@ void USurInventorySlot::RemoveItemFromSlot(int32 Count){
 	if (NumberItemsStacked <= 0){
 		NumberItemsStacked = 0;
 		ItemDisplayName = TEXT("");
-		ItemClass = NULL;
 	}
 }

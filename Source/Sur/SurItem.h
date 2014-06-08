@@ -7,23 +7,19 @@
 
 
 USTRUCT()
-struct FItemDataUI{
+struct FItemUIData{
 
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(EditDefaultsOnly, Category = Name)
 	FName UIName;
 
-	//	UPROPERTY(EditDefaultsOnly, Category = Texture)
-	//		Texture UIImage;
-
 	UPROPERTY(EditDefaultsOnly, Category = Stack)
 		int32 MaxStackable;
 
 	// defaults
-	FItemDataUI(){
+	FItemUIData(){
 		UIName = TEXT("Change Me in BP");
-		//UIImage = null;
 		MaxStackable = 0;
 
 	}
@@ -37,6 +33,8 @@ class ASurItem : public AActor
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Mesh)
 	TSubobjectPtr<class UStaticMeshComponent> Mesh;
 
+	UPROPERTY(EditDefaultsOnly, Category = Blueprint)
+		FString BlueprintPath;
 
 	virtual void BeginPlay() OVERRIDE;
 
@@ -44,12 +42,11 @@ class ASurItem : public AActor
 
 public:
 
+	TSubclassOf<class AActor> SurItemBlueprint;
+
 	// getter for UI Data
 	UFUNCTION(BlueprintCallable, Category = Item)
 		FName GetUIName();
-
-	//UFUNCTION(BlueprintCallable, Category = Item)
-	//void InitializeItem();
 
 
 	//  INVENTORY  ##########################################################################
@@ -66,7 +63,7 @@ public:
 protected:
 
 	// Hold data for UI
-	UPROPERTY(EditDefaultsOnly, Category = UIData)
-		FItemDataUI ItemUIData;
+	UPROPERTY(EditDefaultsOnly, Category = Data)
+		FItemUIData ItemDataUI;
 	
 };
