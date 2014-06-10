@@ -12,27 +12,35 @@ ASurItem::ASurItem(const class FPostConstructInitializeProperties& PCIP)
 	Mesh->SetOnlyOwnerSee(false);
 	Mesh->bCastDynamicShadow = true;
 	Mesh->CastShadow = true;
+	//Mesh->BodyInstance.SetObjectType(ECC_WorldDynamic);
+	//Mesh->BodyInstance.SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	//Mesh->BodyInstance.SetResponseToAllChannels(ECR_Block);
 	Mesh->BodyInstance.SetObjectType(ECC_WorldDynamic);
-	Mesh->BodyInstance.SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	Mesh->BodyInstance.SetResponseToAllChannels(ECR_Block);
 	Mesh->SetHiddenInGame(false);
-
+	Mesh->SetSimulatePhysics(true);
+	Mesh->WakeRigidBody();
 
 	bReplicateMovement = true;
 	bReplicates = true;
 
-	static ConstructorHelpers::FObjectFinder<UBlueprint> ItemBlueprint(TEXT("Blueprint'/Game/Items/Blueprints/BP_ItemTest.BP_ItemTest'"));
+	/*
+
+	static ConstructorHelpers::FObjectFinder<UBlueprint> ItemBlueprint((TCHAR*)&BlueprintPath);
 	if (ItemBlueprint.Object){
 		SurItemBlueprint = (UClass*)ItemBlueprint.Object->GeneratedClass;
 	}
+	*/
 
 }
+
+
 
 void ASurItem::BeginPlay(){
 	Super::BeginPlay();
 	if (Mesh){
-		Mesh->SetSimulatePhysics(true);
-		Mesh->WakeRigidBody();
+		
 	}
 }
 
@@ -48,7 +56,10 @@ void ASurItem::ItemPickedUp(){
 }
 
 void ASurItem::ItemDropped(FVector Trajectory){
-	Mesh->AddImpulse(Trajectory * 10000.0f);
+	if (Mesh){
+		Mesh->AddImpulse(Trajectory * 10000.0f);
+	}
+	
 }
 
 
@@ -58,13 +69,16 @@ void ASurItem::ItemDropped(FVector Trajectory){
 void ASurItem::OnItemEquipped(){
 	Mesh->SetSimulatePhysics(false);
 	Mesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	PRINT_SCREEN("ASurItem [OnItemEquipped] Called");
 }
 
 void ASurItem::OnItemUnEquipped(){
-	Mesh->SetSimulatePhysics(true);
-	Mesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+	SetActorHiddenInGame(true);
+	Mesh->AttachParent = NULL;
+	Destroy();
+	PRINT_SCREEN("ASurItem [OnItemUnEquipped] Called");
 }
 
 void ASurItem::OnUseItem(){
-
+	
 }

@@ -73,8 +73,8 @@ bool USurInventory::AddItem(ASurItem* NewItem){
 
 
 // TESTING DROPPING FIRST ITEM FOUND IN ARRAY... UI WILL BE USED FOR THIS LATER
-void USurInventory::RemoveItem(USurInventorySlot* OldItemSlot){
-	OldItemSlot->RemoveItemFromSlot(OldItemSlot->NumberItemsStacked);
+void USurInventory::RemoveItem(int32 Index){
+	Inventory[Index]->RemoveItemFromSlot(Inventory[Index]->NumberItemsStacked);
 }
 
 
@@ -84,7 +84,7 @@ USurInventorySlot* USurInventory::FindSlotForNewItem(ASurItem* NewItem){
 	for (int i = 0; i < Inventory.Num(); i++){
 		USurInventorySlot* CurrentSlot = Inventory[i];
 		if (!CurrentSlot) continue;
-		if (NewItem->UIName == CurrentSlot->ItemDisplayName && !CurrentSlot->IsSlotEmpty() && !CurrentSlot->IsSlotFull()){
+		if (NewItem->SurItemBlueprint == CurrentSlot->ItemBlueprint && !CurrentSlot->IsSlotEmpty() && !CurrentSlot->IsSlotFull()){
 			PRINT_SCREEN("SurInventory [FindSlotForNewItem] Stacked on Slot");
 			return CurrentSlot;
 		}

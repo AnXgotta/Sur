@@ -53,6 +53,8 @@
 		<None Include="..\..\Source\Sur\Sur.Build.cs" />
 		<ClCompile Include="..\..\Source\Sur\Sur.cpp" />
 		<ClInclude Include="..\..\Source\Sur\Sur.h" />
+		<ClCompile Include="..\..\Source\Sur\SurBuildableItem.cpp" />
+		<ClInclude Include="..\..\Source\Sur\SurBuildableItem.h" />
 		<ClCompile Include="..\..\Source\Sur\SurCharacter.cpp" />
 		<ClInclude Include="..\..\Source\Sur\SurCharacter.h" />
 		<ClCompile Include="..\..\Source\Sur\SurGameMode.cpp" />

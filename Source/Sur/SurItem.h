@@ -14,16 +14,14 @@ class ASurItem : public AActor
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Mesh)
 	TSubobjectPtr<class UStaticMeshComponent> Mesh;
 
-	UPROPERTY(EditDefaultsOnly, Category = Blueprint)
-		FString BlueprintPath;
 
 	virtual void BeginPlay() OVERRIDE;
 
 
 
 public:
-
-	TSubclassOf<class AActor> SurItemBlueprint;
+	UPROPERTY(EditDefaultsOnly, Category = Blueprint)
+	TSubclassOf<class ASurItem> SurItemBlueprint;
 
 	//  CONFIGURATION  ##################################################################
 
@@ -53,6 +51,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 		virtual void ItemDropped(FVector Trajectory);
 
+
+	//  INTERACTION  #######################################################################
 
 	UFUNCTION()
 		virtual void OnItemEquipped();

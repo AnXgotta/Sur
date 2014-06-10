@@ -59,7 +59,15 @@ class ASurCharacter : public ACharacter
 		float BaseLookUpRate;
 
 	virtual void BeginPlay() OVERRIDE;
+	virtual void PostInitializeComponents() OVERRIDE;
 	virtual void Tick(float DeltaSeconds) OVERRIDE;
+
+
+	//  SOCKET HELPOERS  #########################################################################
+
+	const FName RIGHT_HAND_SOCKET = TEXT("RIGHT_HAND_SOCKET");
+
+
 
 	// PLAYER STATUS ##############################################################################
 
@@ -102,13 +110,27 @@ class ASurCharacter : public ACharacter
 
 
 
+	// LINE TRACE FOR INTERACTION  #################################################################
+
+	// [client] trace every frame for item interaction 
+	UFUNCTION()
+		void LineTraceForInteraction();
+
+	// [client - server] client-> check if object is item and call .  server->  do checks, assign "CurrentlyTracedItem" for Replication
+	UFUNCTION()
+		void HandleLineTraceForInteractionHit(FHitResult& Hit);
+
+	// [server]  line trace for object, call HandleLineTraceForInteractionHit
+	UFUNCTION(reliable, server, WithValidation)
+		void ServerHandleLineTraceForInteractionHit();
+
 	//  INVENTORY  ##################################################################################
 
-	UPROPERTY()
+	UPROPERTY(Transient, Replicated)
 		USurInventory* Inventory;
 
-	// keep tabs on currently selected item (IN BLUEPRINT)
-	UPROPERTY(BlueprintReadWrite, Category = Inventory)
+	// keep tabs on currently selected item
+	UPROPERTY(Transient, Replicated)
 		ASurItem* CurrentlyTracedItem;
 
 	UFUNCTION(BlueprintCallable, Category = Inventory)
@@ -118,12 +140,21 @@ class ASurCharacter : public ACharacter
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 		void PickUpItem();
 
+	UFUNCTION(server, reliable, WithValidation)
+		void ServerPickUpItem();
+
 	// drop item from inventory
 	UFUNCTION(BlueprintCallable, Category = Inventory)
-		void DropItem(USurInventorySlot* OldItemSlot);
+		void DropItem(int32 Index);
+
+	UFUNCTION(server, reliable, WithValidation)
+		void ServerDropItem(int32 Index);
 
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 		void EquipItem(USurInventorySlot* EquipItemSlot);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void ServerEquipItem(USurInventorySlot* EquipItemSlot);
 
 	// TESTING  ##############################################################################
 	// drop item from inventory
@@ -136,8 +167,23 @@ class ASurCharacter : public ACharacter
 	// END TESTING  ##########################################################################
 
 	
+	//  INTERACTION  #########################################################################
 
-	//  MOVEMENT  ####################################################################################
+	// keep tabs on currently equipped item
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_CurrentlyEquippedItem)
+		ASurItem* CurrentlyEquippedItem;
+
+	UFUNCTION()
+		void OnRep_CurrentlyEquippedItem(ASurItem* NewEquippedItem);
+
+	UFUNCTION()
+		void UseItem();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void ServerUseItem();
+
+
+	//  INPUT  ####################################################################################
 
 	UFUNCTION()
 		void MoveForward(float Val);
@@ -150,6 +196,15 @@ class ASurCharacter : public ACharacter
 
 	UFUNCTION()
 		void LookUpAtRate(float Rate);
+
+	UFUNCTION()
+		void Drop();
+
+	UFUNCTION()
+		void Interact();
+
+	UFUNCTION()
+		void TestEquip();
 
 protected:
 	// APawn interface

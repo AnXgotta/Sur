@@ -4,7 +4,7 @@
 	<ItemGroup>
 		<None Include="..\..\Sur.uproject" />
 		<Filter Include="Source">
-			<UniqueIdentifier>{B02C5AC0-081F-404F-80FA-8F04AA9871A2}</UniqueIdentifier>
+			<UniqueIdentifier>{780AA9AC-36D2-4374-AFF9-CC842041DE83}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Source\Sur.Target.cs">
 			<Filter>Source</Filter>
@@ -13,7 +13,7 @@
 			<Filter>Source</Filter>
 		</None >
 		<Filter Include="Config">
-			<UniqueIdentifier>{D7E5CBC1-2E58-497F-AB01-B4CC75FBC79D}</UniqueIdentifier>
+			<UniqueIdentifier>{56DD009F-320A-4904-B152-40DE2A1D701E}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Config\DefaultEngine.ini">
 			<Filter>Config</Filter>
@@ -25,7 +25,7 @@
 			<Filter>Config</Filter>
 		</None >
 		<Filter Include="Source\Sur">
-			<UniqueIdentifier>{5C06AB81-753A-458E-A6A1-6BCA5E8E0156}</UniqueIdentifier>
+			<UniqueIdentifier>{208701CA-1F90-4610-A02E-5BA29C6CE13C}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Source\Sur\Sur.Build.cs">
 			<Filter>Source\Sur</Filter>
@@ -34,6 +34,12 @@
 			<Filter>Source\Sur</Filter>
 		</ClCompile >
 		<ClInclude Include="..\..\Source\Sur\Sur.h">
+			<Filter>Source\Sur</Filter>
+		</ClInclude >
+		<ClCompile Include="..\..\Source\Sur\SurBuildableItem.cpp">
+			<Filter>Source\Sur</Filter>
+		</ClCompile >
+		<ClInclude Include="..\..\Source\Sur\SurBuildableItem.h">
 			<Filter>Source\Sur</Filter>
 		</ClInclude >
 		<ClCompile Include="..\..\Source\Sur\SurCharacter.cpp">
@@ -82,10 +88,10 @@
 			<Filter>Source\Sur</Filter>
 		</ClInclude >
 		<Filter Include="Source\Sur\Resources">
-			<UniqueIdentifier>{6DEB0D1B-3B21-4BAD-A880-C80FCDBF9C88}</UniqueIdentifier>
+			<UniqueIdentifier>{A9E3EB0F-56B8-424D-85FD-C7F764E319E2}</UniqueIdentifier>
 		</Filter>
 		<Filter Include="Source\Sur\Resources\Windows">
-			<UniqueIdentifier>{F2272C9B-9EBA-4B8F-B60F-D9ECF67AD579}</UniqueIdentifier>
+			<UniqueIdentifier>{8A96CCF0-C91B-443F-849D-2400C7F6A94F}</UniqueIdentifier>
 		</Filter>
 		<None Include="..\..\Source\Sur\Resources\Windows\Sur.ico">
 			<Filter>Source\Sur\Resources\Windows</Filter>

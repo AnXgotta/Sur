@@ -38,7 +38,7 @@ class USurInventory : public UObject
 		bool AddItem(ASurItem* NewItem);
 
 	UFUNCTION()
-		void RemoveItem(USurInventorySlot* SurInventorySlot);
+		void RemoveItem(int32 Index);
 
 
 	//  HELPER METHODS  ##############################################
