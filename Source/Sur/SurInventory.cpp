@@ -32,10 +32,16 @@ void USurInventory::Initialize(){
 			Inventory.Add(NewSlot);
 		}
 	}
+
+	for (int j = 0; j < 8; j++){
+		USurInventorySlot* NewSlot = NewObject<USurInventorySlot>();
+		NewSlot->SlotPosition = FVector2D((float)j, 0.0f);
+		ActionBar.Add(NewSlot);
+	}
 }
 
 
-bool USurInventory::AddItem(ASurItem* NewItem){
+bool USurInventory::AddItemToInventoryFromItem(ASurItem* NewItem){
 	if (!NewItem){
 		PRINT_SCREEN(TEXT("USurInventory [AddItem] NewItem NULL"));
 		return false;
@@ -71,10 +77,27 @@ bool USurInventory::AddItem(ASurItem* NewItem){
 	return true;
 }
 
+bool USurInventory::AddItemToInventoryFromSlot(USurInventorySlot* NewItem){
+
+	return false;
+}
 
 // TESTING DROPPING FIRST ITEM FOUND IN ARRAY... UI WILL BE USED FOR THIS LATER
-void USurInventory::RemoveItem(int32 Index){
+void USurInventory::RemoveItemFromInventory(int32 Index){
 	Inventory[Index]->RemoveItemFromSlot(Inventory[Index]->NumberItemsStacked);
+}
+
+
+bool USurInventory::AddItemToActionBarFromItem(ASurItem* NewItem){
+	return false;
+}
+
+bool USurInventory::AddItemToActionBarFromSlot(USurInventorySlot* NewItem){
+	return false;
+}
+
+void USurInventory::RemoveItemFromActionBar(int32 Index){
+
 }
 
 

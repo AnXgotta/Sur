@@ -70,7 +70,7 @@ void ASurCharacter::Tick(float DeltaSeconds){
 //  LINE TRACE FOR INTERACTION  #######################################################
 
 void ASurCharacter::LineTraceForInteraction(){
-
+	if (Role == ROLE_Authority) return;
 	if (!Controller) return;
 
 	FVector CameraLocation;
@@ -85,11 +85,6 @@ void ASurCharacter::LineTraceForInteraction(){
 	ECollisionChannel traceCollisionChannel = ECC_GameTraceChannel1;
 	FCollisionQueryParams traceParams(FName(TEXT("Interaction Trace")), true, NULL);
 	traceParams.bTraceComplex = true;
-	DrawDebugLine(GetWorld(), StartPoint, EndPoint, FColor::Red, false, -1.0f, NULL, 2.0f);
-
-	//-MOVE THIS TO TOP OF FUNCTION WHEN DONE DEBUGGING-----
-	if (Role == ROLE_Authority) return;
-	//------------------------------------------------------
 
 	if (GetWorld()->LineTraceSingle(HitOut, StartPoint, EndPoint, traceCollisionChannel, traceParams)){
 		HandleLineTraceForInteractionHit(HitOut);
@@ -164,7 +159,7 @@ void ASurCharacter::PickUpItem(){
 			return;
 		}
 
-		if (!Inventory->AddItem(CurrentlyTracedItem)){
+		if (!Inventory->AddItemToInventoryFromItem(CurrentlyTracedItem)){
 			// most likely inventory is full... or an error of some kind
 			PRINT_SCREEN("SurCharacter:  [PickUpItem]  Inventory Full!");
 		}
@@ -182,13 +177,12 @@ void ASurCharacter::ServerPickUpItem_Implementation(){
 	PickUpItem();
 }
 
-void ASurCharacter::DropItem(int32 Index){
+void ASurCharacter::DropEquippedItem(){
 
-	USurInventorySlot* OldItemSlot = Inventory->Inventory[Index];
-	if (!OldItemSlot) return;
+	if (!CurrentlyEquippedItem) return;
 
 	if (Role != ROLE_Authority){
-		ServerDropItem(Index);
+		ServerDropEquippedItem();
 		return;
 	}
 
@@ -203,33 +197,33 @@ void ASurCharacter::DropItem(int32 Index){
 	if (World){
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Instigator = this;
-		ASurItem* DroppedItem = World->SpawnActor<ASurItem>(OldItemSlot->ItemBlueprint, SpawnPoint, FRotator(0.0f, 0.0f, 0.0f), SpawnParams);
+		ASurItem* DroppedItem = World->SpawnActor<ASurItem>(CurrentlyEquippedItem->SurItemBlueprint, SpawnPoint, FRotator(0.0f, 0.0f, 0.0f), SpawnParams);
 		if (DroppedItem){
-			Inventory->RemoveItem(Index);
+			CurrentlyEquippedInventorySlot->RemoveItemFromSlot(1);
 			DroppedItem->ItemDropped(CameraRotation.Vector());
+			if (CurrentlyEquippedInventorySlot->IsSlotEmpty()){
+				CurrentlyEquippedInventorySlot = NULL;
+				CurrentlyEquippedItem->OnItemUnEquipped();
+				CurrentlyEquippedItem = NULL;
+			}
 		}
 	}
 
 }
 
-bool ASurCharacter::ServerDropItem_Validate(int32 Index){
+bool ASurCharacter::ServerDropEquippedItem_Validate(){
 	return true;
 }
 
-void ASurCharacter::ServerDropItem_Implementation(int32 Index){
-	DropItem(Index);
+void ASurCharacter::ServerDropEquippedItem_Implementation(){
+	DropEquippedItem();
 }
 
 
 
 //  TESTING ################################################################
 void ASurCharacter::TestingDropFirstItem(){
-	for (int i = 0; i < Inventory->MaxSize; i++){
-		if (!Inventory->Inventory[i]->IsSlotEmpty()){
-			DropItem(i);
-			return;
-		}
-	}
+
 }
 
 void ASurCharacter::TestingEquipItem(){
@@ -283,7 +277,7 @@ void ASurCharacter::OnRep_CurrentlyEquippedItem(ASurItem* LastEquippedItem){
 
 
 void ASurCharacter::EquipItem(USurInventorySlot* EquipItemSlot){
-	if (!EquipItemSlot) return;
+	if (!EquipItemSlot || EquipItemSlot->IsSlotEmpty()) return;
 	if (!Mesh1P) return;
 
 	if (Role < ROLE_Authority){
@@ -302,16 +296,17 @@ void ASurCharacter::ServerEquipItem_Implementation(USurInventorySlot* EquipItemS
 		CurrentlyEquippedItem->OnItemUnEquipped();
 	}
 
-	if (!EquipItemSlot) return;
+	if (!EquipItemSlot || EquipItemSlot->IsSlotEmpty()) return;
 
 	UWorld* const World = GetWorld();
 	if (World){
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Instigator = this;
 		ASurItem* NewSpawnedItem = World->SpawnActor<ASurItem>(EquipItemSlot->ItemBlueprint, Mesh1P->GetSocketLocation(RIGHT_HAND_SOCKET), Mesh1P->GetSocketRotation(RIGHT_HAND_SOCKET));
-		if (NewSpawnedItem){
+		if (NewSpawnedItem){			
 			CurrentlyEquippedItem = NewSpawnedItem;
 			CurrentlyEquippedItem->OnItemEquipped();
+			CurrentlyEquippedInventorySlot = EquipItemSlot;
 			CurrentlyEquippedItem->Mesh->AttachTo(Mesh1P, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
 			PRINT_SCREEN("SurCharacter [EquipItem]  Fully Equipped");
 		}
@@ -370,7 +365,7 @@ void ASurCharacter::LookUpAtRate(float Rate){
 }
 
 void ASurCharacter::Drop(){
-	TestingDropFirstItem();
+	DropEquippedItem();
 }
 
 void ASurCharacter::Interact(){
@@ -406,6 +401,7 @@ void ASurCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 	DOREPLIFETIME_CONDITION(ASurCharacter, CurrentlyTracedItem, COND_OwnerOnly);
 
 	DOREPLIFETIME(ASurCharacter, CurrentlyEquippedItem);
+	DOREPLIFETIME_CONDITION(ASurCharacter, CurrentlyEquippedInventorySlot, COND_OwnerOnly);
 }
 
 

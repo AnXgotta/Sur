@@ -37,7 +37,7 @@ UTexture* USurInventorySlot::GetItemDisplayTexture(){
 //  HELPERS  ###################################################################
 
 bool USurInventorySlot::IsSlotEmpty(){
-	return NumberItemsStacked == 0 ? true : false;
+	return NumberItemsStacked <= 0 ? true : false;
 }
 
 bool USurInventorySlot::IsSlotFull(){

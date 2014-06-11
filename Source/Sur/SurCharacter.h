@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "SurItem.h"
 #include "SurInventory.h"
+#include "SurInventorySlot.h"
 #include "SurCharacter.generated.h"
 
 USTRUCT()
@@ -145,10 +146,10 @@ class ASurCharacter : public ACharacter
 
 	// drop item from inventory
 	UFUNCTION(BlueprintCallable, Category = Inventory)
-		void DropItem(int32 Index);
+		void DropEquippedItem();
 
 	UFUNCTION(server, reliable, WithValidation)
-		void ServerDropItem(int32 Index);
+		void ServerDropEquippedItem();
 
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 		void EquipItem(USurInventorySlot* EquipItemSlot);
@@ -172,6 +173,9 @@ class ASurCharacter : public ACharacter
 	// keep tabs on currently equipped item
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_CurrentlyEquippedItem)
 		ASurItem* CurrentlyEquippedItem;
+
+	UPROPERTY(Transient, Replicated)
+		USurInventorySlot* CurrentlyEquippedInventorySlot;
 
 	UFUNCTION()
 		void OnRep_CurrentlyEquippedItem(ASurItem* NewEquippedItem);
