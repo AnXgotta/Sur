@@ -39,12 +39,14 @@ ASurItem::ASurItem(const class FPostConstructInitializeProperties& PCIP)
 
 void ASurItem::BeginPlay(){
 	Super::BeginPlay();
-	if (Mesh){
-		
-	}
+
 }
 
+//  HELPERS  ###########################################################################
 
+TEnumAsByte<EItemAction::Type> ASurItem::GetItemActionType(){
+	return ItemActionType;
+}
 
 
 //  INVENTORY  ##########################################################################

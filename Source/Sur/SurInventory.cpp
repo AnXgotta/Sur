@@ -25,8 +25,8 @@ bool USurInventory::IsFull(){
 
 
 void USurInventory::Initialize(){
-	for (int i = 0; i < MaxSize / 8; i++){
-		for (int k = 0; k < MaxSize / 4; k++){
+	for (int i = 0; i < MaxSize / 16; i++){
+		for (int k = 0; k < MaxSize / 2; k++){
 			USurInventorySlot* NewSlot = NewObject<USurInventorySlot>();
 			NewSlot->SlotPosition = FVector2D((float)k, (float)i);
 			Inventory.Add(NewSlot);

@@ -22,18 +22,15 @@ ASurCharacter::ASurCharacter(const class FPostConstructInitializeProperties& PCI
 	FirstPersonCameraComponent->RelativeLocation = FVector(0, 0, 64.f); // Position the camera
 
 
-	Mesh1P = PCIP.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("CharacterMesh1P"));
-	Mesh1P->SetOnlyOwnerSee(true);			// only the owning player will see this mesh
-	Mesh1P->AttachParent = FirstPersonCameraComponent;
-	Mesh1P->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
-	Mesh1P->PrimaryComponentTick.TickGroup = TG_PrePhysics;
-	Mesh1P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	//Mesh1P->RelativeLocation = FVector(0.f, 0.f, -150.f);
-	Mesh1P->bCastDynamicShadow = false;
-	Mesh1P->CastShadow = false;
+	Mesh->AttachParent = FirstPersonCameraComponent;
+	Mesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
+	Mesh->PrimaryComponentTick.TickGroup = TG_PrePhysics;
 
 
 	// CHARACTER SET UP
+
+	bIsBuilding = false;
+
 	// Replication
 	bReplicateMovement = true;
 	bReplicates = true;
@@ -65,9 +62,8 @@ void ASurCharacter::Tick(float DeltaSeconds){
 }
 
 
-
-
 //  LINE TRACE FOR INTERACTION  #######################################################
+
 
 void ASurCharacter::LineTraceForInteraction(){
 	if (Role == ROLE_Authority) return;
@@ -94,7 +90,6 @@ void ASurCharacter::LineTraceForInteraction(){
 		}
 	}
 }
-
 
 void ASurCharacter::HandleLineTraceForInteractionHit(FHitResult& Hit){
 	ASurItem* ItemHit = Cast<ASurItem>(Hit.GetActor());
@@ -141,10 +136,8 @@ void ASurCharacter::ServerHandleLineTraceForInteractionHit_Implementation(){
 }
 
 
-
-
-
 //  INVENTORY  #########################################################################
+
 
 TArray<USurInventorySlot*> ASurCharacter::GetInventory(){
 	return Inventory->Inventory;
@@ -222,9 +215,7 @@ void ASurCharacter::ServerDropEquippedItem_Implementation(){
 
 
 //  TESTING ################################################################
-void ASurCharacter::TestingDropFirstItem(){
 
-}
 
 void ASurCharacter::TestingEquipItem(){
 	PRINT_SCREEN("ASurCharacter [TestintEquipItem] Called");
@@ -238,7 +229,40 @@ void ASurCharacter::TestingEquipItem(){
 
 //  END TESTING  ###########################################################
 
+//  BUILDING  ##############################################################
+
+
+void ASurCharacter::BuildProcessBegin(){
+
+}
+
+bool ASurCharacter::ServerBuildProcessBegin_Validate(){
+	return true;
+}
+
+void ASurCharacter::ServerBuildProcessBegin_Implementation(){
+
+}
+
+void ASurCharacter::BuildProcessEnd(bool Cancelled){
+
+}
+
+bool ASurCharacter::ServerBuildProcessEnd_Validate(bool Cancelled){
+	return true;
+}
+
+void ASurCharacter::ServerBuildProcessEnd_Implementation(bool Cancelled){
+
+}
+
+void ASurCharacter::OnRep_bIsBuilding(bool bParam){
+
+}
+
+
 //  INTERACTION  ###########################################################
+
 
 void ASurCharacter::UseItem(){
 	if (!CurrentlyEquippedItem){
@@ -250,8 +274,7 @@ void ASurCharacter::UseItem(){
 		ServerUseItem();
 	}
 
-	CurrentlyEquippedItem->OnUseItem();
-
+	 CurrentlyEquippedItem->OnUseItem();
 }
 
 bool ASurCharacter::ServerUseItem_Validate(){
@@ -271,14 +294,13 @@ void ASurCharacter::OnRep_CurrentlyEquippedItem(ASurItem* LastEquippedItem){
 	if (!CurrentlyEquippedItem) return;
 
 	CurrentlyEquippedItem->OnItemEquipped();
-	CurrentlyEquippedItem->Mesh->AttachTo(Mesh1P, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
+	CurrentlyEquippedItem->Mesh->AttachTo(Mesh, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
 	PRINT_SCREEN("ASurCharacter [OnRep_CurrentlyEquippedItem] Client Replicated");
 }
 
-
 void ASurCharacter::EquipItem(USurInventorySlot* EquipItemSlot){
 	if (!EquipItemSlot || EquipItemSlot->IsSlotEmpty()) return;
-	if (!Mesh1P) return;
+	if (!Mesh) return;
 
 	if (Role < ROLE_Authority){
 		PRINT_SCREEN("ASurCharacter [EquipItem] Client");
@@ -302,12 +324,12 @@ void ASurCharacter::ServerEquipItem_Implementation(USurInventorySlot* EquipItemS
 	if (World){
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Instigator = this;
-		ASurItem* NewSpawnedItem = World->SpawnActor<ASurItem>(EquipItemSlot->ItemBlueprint, Mesh1P->GetSocketLocation(RIGHT_HAND_SOCKET), Mesh1P->GetSocketRotation(RIGHT_HAND_SOCKET));
+		ASurItem* NewSpawnedItem = World->SpawnActor<ASurItem>(EquipItemSlot->ItemBlueprint, Mesh->GetSocketLocation(RIGHT_HAND_SOCKET), Mesh->GetSocketRotation(RIGHT_HAND_SOCKET));
 		if (NewSpawnedItem){			
 			CurrentlyEquippedItem = NewSpawnedItem;
 			CurrentlyEquippedItem->OnItemEquipped();
 			CurrentlyEquippedInventorySlot = EquipItemSlot;
-			CurrentlyEquippedItem->Mesh->AttachTo(Mesh1P, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
+			CurrentlyEquippedItem->Mesh->AttachTo(Mesh, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
 			PRINT_SCREEN("SurCharacter [EquipItem]  Fully Equipped");
 		}
 	}
@@ -316,6 +338,7 @@ void ASurCharacter::ServerEquipItem_Implementation(USurInventorySlot* EquipItemS
 
 
 //  INPUT  ################################################################################
+
 
 void ASurCharacter::SetupPlayerInputComponent(class UInputComponent* InputComponent){
 	// set up gameplay key bindings
@@ -339,6 +362,7 @@ void ASurCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 
 
 //  INPUT  ###########################################################################
+
 
 void ASurCharacter::MoveForward(float Value){
 	if (Value != 0.0f){
@@ -379,6 +403,7 @@ void ASurCharacter::TestEquip(){
 
 
 //  REPLICATION SETTINGS  ####################################################################
+
 
 void ASurCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

@@ -6,6 +6,18 @@
 #include "SurItem.generated.h"
 
 
+UENUM()
+namespace EItemAction{
+	enum Type{
+		Null,
+		Build,
+		Fire,
+		Swing
+	};
+}
+
+
+
 UCLASS()
 class ASurItem : public AActor
 {
@@ -37,8 +49,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = Configuration)
 		int32 MaxStackable;
 
+	UPROPERTY(EditDefaultsOnly, Category = Configuration)
+		TEnumAsByte<EItemAction::Type> ItemActionType;
 
 
+	//  HELPERS  #############################################################################
+
+	UFUNCTION()
+		TEnumAsByte<EItemAction::Type> GetItemActionType();
 
 
 	//  INVENTORY  ##########################################################################

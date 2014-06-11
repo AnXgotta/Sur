@@ -3,10 +3,11 @@
 #pragma once
 
 
-#include "GameFramework/Character.h"
+
 #include "SurItem.h"
 #include "SurInventory.h"
 #include "SurInventorySlot.h"
+#include "GameFramework/Character.h"
 #include "SurCharacter.generated.h"
 
 USTRUCT()
@@ -42,10 +43,6 @@ UCLASS()
 class ASurCharacter : public ACharacter
 {
 	GENERATED_UCLASS_BODY()
-
-	/** Pawn mesh: 1st person view (arms; seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	TSubobjectPtr<class USkeletalMeshComponent> Mesh1P;
 
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
@@ -158,14 +155,32 @@ class ASurCharacter : public ACharacter
 		void ServerEquipItem(USurInventorySlot* EquipItemSlot);
 
 	// TESTING  ##############################################################################
-	// drop item from inventory
-	UFUNCTION(BlueprintCallable, Category = Inventory)
-		void TestingDropFirstItem();
 
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 		void TestingEquipItem();
 
 	// END TESTING  ##########################################################################
+
+
+	//  BUILDING  ###########################################################################
+
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_bIsBuilding)
+		bool bIsBuilding;
+
+	UFUNCTION()
+		void OnRep_bIsBuilding(bool bParam);
+
+	UFUNCTION()
+		void BuildProcessBegin();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void ServerBuildProcessBegin();
+
+	UFUNCTION()
+		void BuildProcessEnd(bool Cancelled);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void ServerBuildProcessEnd(bool Cancelled);
 
 	
 	//  INTERACTION  #########################################################################
