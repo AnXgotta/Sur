@@ -164,17 +164,20 @@ class ASurCharacter : public ACharacter
 
 	//  BUILDING  ###########################################################################
 
-	UPROPERTY(Transient, ReplicatedUsing = OnRep_bIsBuilding)
+	UPROPERTY(Transient, Replicated)
 		bool bIsBuilding;
 
+	UPROPERTY()
+		float BuildingDistanceModifier;
+
+	UPROPERTY()
+		float BuildingRotationModifier;
+
 	UFUNCTION()
-		void OnRep_bIsBuilding(bool bParam);
+		void BuildingTickHandle();
 
 	UFUNCTION()
 		void BuildProcessBegin();
-
-	UFUNCTION(Server, Reliable, WithValidation)
-		void ServerBuildProcessBegin();
 
 	UFUNCTION()
 		void BuildProcessEnd(bool Cancelled);
@@ -224,6 +227,24 @@ class ASurCharacter : public ACharacter
 
 	UFUNCTION()
 		void TestEquip();
+
+	UFUNCTION()
+		void ActionQ();
+
+	UFUNCTION()
+		void ActionE();
+
+	UFUNCTION()
+		void LMB();
+
+	UFUNCTION()
+		void RMB();
+
+	UFUNCTION()
+		void MWU();
+
+	UFUNCTION()
+		void MWD();
 
 protected:
 	// APawn interface

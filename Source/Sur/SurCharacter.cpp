@@ -30,7 +30,8 @@ ASurCharacter::ASurCharacter(const class FPostConstructInitializeProperties& PCI
 	// CHARACTER SET UP
 
 	bIsBuilding = false;
-
+	BuildingDistanceModifier = 1.0f;
+	BuildingRotationModifier = 0.0f;
 	// Replication
 	bReplicateMovement = true;
 	bReplicates = true;
@@ -56,7 +57,7 @@ void ASurCharacter::Tick(float DeltaSeconds){
 	Super::Tick(DeltaSeconds);
 	
 	LineTraceForInteraction();
-
+	BuildingTickHandle();
 	
 
 }
@@ -74,13 +75,16 @@ void ASurCharacter::LineTraceForInteraction(){
 	Controller->GetPlayerViewPoint(CameraLocation, CameraRotation);
 
 	const FVector StartPoint = CameraLocation;
-	const FVector EndPoint = CameraLocation + (CameraRotation.Vector() * 200.0f);
+	const FVector EndPoint = CameraLocation + (CameraRotation.Vector() * 250.0f);
+
 
 	FHitResult HitOut;
 	HitOut = FHitResult(ForceInit);
 	ECollisionChannel traceCollisionChannel = ECC_GameTraceChannel1;
 	FCollisionQueryParams traceParams(FName(TEXT("Interaction Trace")), true, NULL);
 	traceParams.bTraceComplex = true;
+
+	
 
 	if (GetWorld()->LineTraceSingle(HitOut, StartPoint, EndPoint, traceCollisionChannel, traceParams)){
 		HandleLineTraceForInteractionHit(HitOut);
@@ -231,21 +235,54 @@ void ASurCharacter::TestingEquipItem(){
 
 //  BUILDING  ##############################################################
 
+void ASurCharacter::BuildingTickHandle(){
+	if (!bIsBuilding) return;
 
+	FHitResult HitOut;
+	ECollisionChannel traceCollisionChannel = ECC_WorldStatic;
+	FCollisionQueryParams traceParams(FName(TEXT("Interaction Trace")), true, NULL);
+	traceParams.bTraceComplex = true;
+	traceParams.AddIgnoredActor(CurrentlyEquippedItem);
+
+	FVector ItemLocation = CurrentlyEquippedItem->GetActorLocation();
+	FVector EndPoint = ItemLocation + (CurrentlyEquippedItem->GetActorUpVector() * 500.0f);
+	FVector* HitNormal = NULL;
+
+	if (GetWorld()->LineTraceSingle(HitOut, ItemLocation, EndPoint, traceCollisionChannel, traceParams)){
+		HitNormal = &HitOut.ImpactNormal;
+	}
+
+	FRotator CurrentBuildRotation = FRotator::ZeroRotator;
+	if (HitNormal){
+		CurrentBuildRotation = HitNormal->Rotation();
+	}
+	FVector DefaultBuildPosition = CapsuleComponent->GetForwardVector() * 300.0f;
+	FVector CurrentBuildPosition = CapsuleComponent->GetComponentLocation() + (DefaultBuildPosition * BuildingDistanceModifier);
+
+	CurrentBuildRotation.Pitch = CurrentBuildRotation.Pitch + BuildingRotationModifier;
+
+	CurrentBuildPosition.Z = CurrentlyEquippedItem->Mesh->Bounds.SphereRadius/2.0f;
+
+	CurrentlyEquippedItem->SetActorLocation(CurrentBuildPosition);
+	CurrentlyEquippedItem->SetActorRelativeRotation(CurrentBuildRotation);
+
+}
+
+// [server[
 void ASurCharacter::BuildProcessBegin(){
+	bIsBuilding = true;
 
 }
 
-bool ASurCharacter::ServerBuildProcessBegin_Validate(){
-	return true;
-}
-
-void ASurCharacter::ServerBuildProcessBegin_Implementation(){
-
-}
 
 void ASurCharacter::BuildProcessEnd(bool Cancelled){
+	bIsBuilding = false;
 
+	if (Cancelled){
+
+	}else{
+
+	}
 }
 
 bool ASurCharacter::ServerBuildProcessEnd_Validate(bool Cancelled){
@@ -253,10 +290,6 @@ bool ASurCharacter::ServerBuildProcessEnd_Validate(bool Cancelled){
 }
 
 void ASurCharacter::ServerBuildProcessEnd_Implementation(bool Cancelled){
-
-}
-
-void ASurCharacter::OnRep_bIsBuilding(bool bParam){
 
 }
 
@@ -270,11 +303,20 @@ void ASurCharacter::UseItem(){
 		return;
 	}
 
+	switch (CurrentlyEquippedItem->GetItemActionType()){
+	case EItemAction::Build:
+		if (bIsBuilding) return;
+		break;
+	default:
+
+		break;
+	}
+
+
 	if (Role < ROLE_Authority){
 		ServerUseItem();
 	}
 
-	 CurrentlyEquippedItem->OnUseItem();
 }
 
 bool ASurCharacter::ServerUseItem_Validate(){
@@ -282,7 +324,14 @@ bool ASurCharacter::ServerUseItem_Validate(){
 }
 
 void ASurCharacter::ServerUseItem_Implementation(){
+	switch (CurrentlyEquippedItem->GetItemActionType()){
+	case EItemAction::Build:
+		BuildProcessBegin();
+		break;
+	default:
 
+		break;
+	}
 }
 
 void ASurCharacter::OnRep_CurrentlyEquippedItem(ASurItem* LastEquippedItem){
@@ -348,6 +397,13 @@ void ASurCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	InputComponent->BindAction("Interact", IE_Pressed, this, &ASurCharacter::Interact);
 	InputComponent->BindAction("Drop", IE_Pressed, this, &ASurCharacter::Drop);
 	InputComponent->BindAction("TestEquip", IE_Pressed, this, &ASurCharacter::TestEquip);
+	InputComponent->BindAction("Q", IE_Pressed, this, &ASurCharacter::ActionQ);
+	InputComponent->BindAction("E", IE_Pressed, this, &ASurCharacter::ActionE);
+	InputComponent->BindAction("LMB", IE_Pressed, this, &ASurCharacter::LMB);
+	InputComponent->BindAction("RMB", IE_Pressed, this, &ASurCharacter::RMB);
+	InputComponent->BindAction("MWU", IE_Pressed, this, &ASurCharacter::MWU);
+	InputComponent->BindAction("MWD", IE_Pressed, this, &ASurCharacter::MWD);
+
 	InputComponent->BindAxis("MoveForward", this, &ASurCharacter::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &ASurCharacter::MoveRight);
 
@@ -401,6 +457,41 @@ void ASurCharacter::TestEquip(){
 	TestingEquipItem();
 }
 
+void ASurCharacter::ActionQ(){
+	if (bIsBuilding){
+		PRINT_SCREEN("SurCharacter [ActionQ] Pressed");
+		BuildingRotationModifier = FMath::Min(BuildingRotationModifier + 5.0f, 180.0f);
+	}
+}
+
+void ASurCharacter::ActionE(){
+	if (bIsBuilding){
+		PRINT_SCREEN("SurCharacter [ActionE] Pressed");
+		BuildingRotationModifier = FMath::Max(BuildingRotationModifier - 5.0f, -180.0f);
+	}
+}
+
+void ASurCharacter::LMB(){
+	UseItem();
+}
+
+void ASurCharacter::RMB(){
+
+}
+
+void ASurCharacter::MWU(){
+	if (bIsBuilding){
+		PRINT_SCREEN("SurCharacter [MWU] Pressed");
+		BuildingDistanceModifier = FMath::Min(BuildingDistanceModifier + 0.1f, 1.5f);
+	}
+}
+
+void ASurCharacter::MWD(){
+	if (bIsBuilding){
+		PRINT_SCREEN("SurCharacter [MWD] Pressed");
+		BuildingDistanceModifier = FMath::Max(BuildingDistanceModifier - 0.1f, 0.5f);
+	}
+}
 
 //  REPLICATION SETTINGS  ####################################################################
 
@@ -427,6 +518,8 @@ void ASurCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 
 	DOREPLIFETIME(ASurCharacter, CurrentlyEquippedItem);
 	DOREPLIFETIME_CONDITION(ASurCharacter, CurrentlyEquippedInventorySlot, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ASurCharacter, bIsBuilding, COND_OwnerOnly);
 }
 
 
