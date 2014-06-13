@@ -514,6 +514,7 @@ void ASurCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 
 	// only to local owner: weapon change requests are locally instigated, other clients don't need it
 	DOREPLIFETIME_CONDITION(ASurCharacter, Inventory, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ASurCharacter, ActionBar, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ASurCharacter, CurrentlyTracedItem, COND_OwnerOnly);
 
 	DOREPLIFETIME(ASurCharacter, CurrentlyEquippedItem);

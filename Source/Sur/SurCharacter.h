@@ -127,6 +127,9 @@ class ASurCharacter : public ACharacter
 	UPROPERTY(Transient, Replicated)
 		USurInventory* Inventory;
 
+	UPROPERTY(Transient, Replicated)
+		USurInventory* ActionBar;
+
 	// keep tabs on currently selected item
 	UPROPERTY(Transient, Replicated)
 		ASurItem* CurrentlyTracedItem;

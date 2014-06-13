@@ -21,9 +21,6 @@ class USurInventory : public UObject
 	UPROPERTY()
 	TArray<USurInventorySlot* > Inventory;
 
-	UPROPERTY()
-		TArray<USurInventorySlot* > ActionBar;
-
 	// divisible by 8 and 4 -- unless dimensions change
 	UPROPERTY()
 	int32 MaxSize;
@@ -46,14 +43,6 @@ class USurInventory : public UObject
 	UFUNCTION()
 		void RemoveItemFromInventory(int32 Index);
 
-	UFUNCTION()
-		bool AddItemToActionBarFromItem(ASurItem* NewItem);
-
-	UFUNCTION()
-		bool AddItemToActionBarFromSlot(USurInventorySlot* NewItemClot);
-
-	UFUNCTION()
-		void RemoveItemFromActionBar(int32 Index);
 
 
 	//  HELPER METHODS  ##############################################
