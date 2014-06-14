@@ -34,16 +34,16 @@ void USurInventory::Initialize(int32 TotalSize){
 }
 
 
-bool USurInventory::AddItemToInventoryFromItem(ASurItem* NewItem){
+int32 USurInventory::AddItemToInventoryFromItemStack(ASurItem* NewItem){
 	if (!NewItem){
 		PRINT_SCREEN(TEXT("USurInventory [AddItem] NewItem NULL"));
-		return false;
+		return -1;
 	}
 
 	// check if inventory is full
 	if (IsFull()){
 		PRINT_SCREEN(TEXT("USurInventory [AddItem] Inventory Full"));
-		return false;
+		return -1;
 	}
 
 	int32 OverflowItems = 0;
@@ -52,25 +52,64 @@ bool USurInventory::AddItemToInventoryFromItem(ASurItem* NewItem){
 		// check if inventory is full
 		if (IsFull()){
 			PRINT_SCREEN(TEXT("NOTICE:  USurInventory [AddItem] Inventory Full Do-While"));
-			return false;
+			return -1;
 		}
 
-		USurInventorySlot* InventorySlot = FindSlotForNewItem(NewItem);
+		USurInventorySlot* InventorySlot = FindStackSlotForNewItem(NewItem);
 
 		if (InventorySlot){
 			OverflowItems = InventorySlot->AddItemToSlot(NewItem);			
 		}else{
-			PRINT_SCREEN(TEXT("NOTICE:  USurInventory [AddItem] InventorySlot NULL?"));
-			return false;
+			PRINT_SCREEN(TEXT("NOTICE:  USurInventory [AddItem] No Stackable Slots"));			
+			return NewItem->CurrentItemCount;
 		}
 
 	} while (OverflowItems > 0);
 
-	NewItem->ItemPickedUp();
-	return true;
+	if (OverflowItems <= 0){
+		NewItem->ItemPickedUp();
+	}
+	return OverflowItems;
 }
 
+int32 USurInventory::AddItemToInventoryFromItemOpen(ASurItem* NewItem){
+	if (!NewItem){
+		PRINT_SCREEN(TEXT("USurInventory [AddItem] NewItem NULL"));
+		return -1;
+	}
 
+	// check if inventory is full
+	if (IsFull()){
+		PRINT_SCREEN(TEXT("USurInventory [AddItem] Inventory Full"));
+		return -1;
+	}
+
+	int32 OverflowItems = 0;
+	do{
+
+		// check if inventory is full
+		if (IsFull()){
+			PRINT_SCREEN(TEXT("NOTICE:  USurInventory [AddItem] Inventory Full Do-While"));
+			return -1;
+		}
+
+		USurInventorySlot* InventorySlot = FindOpenSlotForNewItem(NewItem);
+
+		if (InventorySlot){
+			OverflowItems = InventorySlot->AddItemToSlot(NewItem);
+		}else{
+			PRINT_SCREEN(TEXT("NOTICE:  USurInventory [AddItem] No Open Slots"));
+			return NewItem->CurrentItemCount;
+		}
+
+	} while (OverflowItems > 0);
+
+	if (OverflowItems <= 0){
+		NewItem->ItemPickedUp();
+	}
+	
+	return OverflowItems;
+}
 
 bool USurInventory::AddItemToInventorySlotFromSlot(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot){
 
@@ -94,7 +133,7 @@ void USurInventory::MoveItem(int32 FromIndex, int32 ToIndex){
 
 //  HELPER METHODS  #########################################################
 
-USurInventorySlot* USurInventory::FindSlotForNewItem(ASurItem* NewItem){
+USurInventorySlot* USurInventory::FindStackSlotForNewItem(ASurItem* NewItem){
 	for (int i = 0; i < Inventory.Num(); i++){
 		USurInventorySlot* CurrentSlot = Inventory[i];
 		if (!CurrentSlot) continue;
@@ -103,6 +142,11 @@ USurInventorySlot* USurInventory::FindSlotForNewItem(ASurItem* NewItem){
 			return CurrentSlot;
 		}
 	}
+
+	return NULL;
+}
+
+USurInventorySlot* USurInventory::FindOpenSlotForNewItem(ASurItem* NewItem){
 
 	for (int i = 0; i < Inventory.Num(); i++){
 		USurInventorySlot* CurrentSlot = Inventory[i];
@@ -114,5 +158,4 @@ USurInventorySlot* USurInventory::FindSlotForNewItem(ASurItem* NewItem){
 	}
 	return NULL;
 }
-
 

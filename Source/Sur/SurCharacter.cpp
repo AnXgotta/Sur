@@ -165,13 +165,21 @@ void ASurCharacter::PickUpItem(){
 			return;
 		}
 
-		if (!ActionBar->AddItemToInventoryFromItem(CurrentlyTracedItem)){
-			if (!Inventory->AddItemToInventoryFromItem(CurrentlyTracedItem)){
-				// most likely inventory is full... or an error of some kind
-				PRINT_SCREEN("SurCharacter:  [PickUpItem]  Inventory Full!");
+		// try stack in ActionBar, stack in inventory, open slot in actionbar, finally open slot in inventory
+		if (ActionBar->AddItemToInventoryFromItemStack(CurrentlyTracedItem) > 0){
+			if (Inventory->AddItemToInventoryFromItemStack(CurrentlyTracedItem) > 0){
+				if (ActionBar->AddItemToInventoryFromItemOpen(CurrentlyTracedItem) > 0){
+					if (Inventory->AddItemToInventoryFromItemOpen(CurrentlyTracedItem) > 0){
+						// most likely inventory is full... or an error of some kind
+						PRINT_SCREEN("SurCharacter:  [PickUpItem]  Inventory Full!");
+						return;
+					}					
+				}
 			}
 		}
-		
+		if (!CurrentlyEquippedItem){
+			EquipItem(ActionBar->Inventory[ActionBarIndex]);
+		}
 	}
 	else{
 		ServerPickUpItem();
@@ -230,6 +238,26 @@ void ASurCharacter::ServerDropEquippedItem_Implementation(){
 
 bool ASurCharacter::CanOpenInventoryUI(){
 	return !bIsBuilding;
+}
+
+void ASurCharacter::AdjustActionBarIndex(int32 Adjust){
+	if (Role < ROLE_Authority){
+		ServerAdjustActionBarIndex(Adjust);
+		return;
+	}
+
+	ActionBarIndex = Adjust;
+
+	EquipItem(ActionBar->Inventory[ActionBarIndex]);
+
+}
+
+bool ASurCharacter::ServerAdjustActionBarIndex_Validate(int32 Adjust){
+	return true;
+}
+
+void ASurCharacter::ServerAdjustActionBarIndex_Implementation(int32 Adjust){
+	AdjustActionBarIndex(Adjust);
 }
 
 //  BUILDING  ##############################################################
@@ -368,6 +396,7 @@ void ASurCharacter::EquipItem(USurInventorySlot* EquipItemSlot){
 		// unequip current item
 		if (CurrentlyEquippedItem){
 			CurrentlyEquippedItem->OnItemUnEquipped();
+			CurrentlyEquippedItem = NULL;
 		}
 
 		if (!EquipItemSlot || EquipItemSlot->IsSlotEmpty()) return;
@@ -423,6 +452,9 @@ void ASurCharacter::HandleInventoryUITransaction(USurInventorySlot* FromSlot, US
 	}
 
 
+	if (!CurrentlyEquippedItem || CurrentlyEquippedItem->SurItemBlueprint != ActionBar->Inventory[ActionBarIndex]->ItemBlueprint){
+		EquipItem(ActionBar->Inventory[ActionBarIndex]);
+	}
 }
 
 bool ASurCharacter::ServerHandleInventoryUITransaction_Validate(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot){
@@ -538,13 +570,11 @@ void ASurCharacter::MWU(){
 		BuildingDistanceModifier = FMath::Min(BuildingDistanceModifier + 0.05f, 1.5f);
 	}
 	else{
-		++ActionBarIndex;
-		if (ActionBarIndex >= ActionBar->MaxSize){
-			ActionBarIndex = 0;
+		int32 NewABIndex = ActionBarIndex + 1;
+		if (NewABIndex >= ActionBar->MaxSize){
+			NewABIndex = 0;
 		}
-
-		EquipItem(ActionBar->Inventory[ActionBarIndex]);
-
+		AdjustActionBarIndex(NewABIndex);
 	}
 }
 
@@ -555,15 +585,15 @@ void ASurCharacter::MWD(){
 		BuildingDistanceModifier = FMath::Max(BuildingDistanceModifier - 0.05f, 0.5f);
 	}
 	else{
-		--ActionBarIndex;
-		if (ActionBarIndex < 0){
-			ActionBarIndex = ActionBar->MaxSize - 1;
+		int32 NewABIndex = ActionBarIndex - 1;
+		
+		if (NewABIndex < 0){
+			NewABIndex = ActionBar->MaxSize - 1;
 		}
-
-		EquipItem(ActionBar->Inventory[ActionBarIndex]);
-
+		AdjustActionBarIndex(NewABIndex);
 	}
 }
+
 
 void ASurCharacter::Button1(){
 	if (!bEnableInput) return;
@@ -600,6 +630,7 @@ void ASurCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 	// only to local owner: weapon change requests are locally instigated, other clients don't need it
 	DOREPLIFETIME_CONDITION(ASurCharacter, Inventory, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ASurCharacter, ActionBar, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ASurCharacter, ActionBarIndex, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ASurCharacter, CurrentlyTracedItem, COND_OwnerOnly);
 
 	DOREPLIFETIME(ASurCharacter, CurrentlyEquippedItem);

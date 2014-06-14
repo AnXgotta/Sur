@@ -129,8 +129,6 @@ public:
 	const FSurButtonStruct* CurCheckButton;
 	const FSurButtonStruct* CurDraggedButton;
 	USurInventorySlot* CurInventorySlot;
-	UPROPERTY()
-		UTexture2D* DraggedItemTexture;
 	bool bIsDraggingButton;
 	int32 CheckCursorInButton(const TArray<FSurButtonStruct>& ButtonArray);
 	int32 ClickedButtonType;

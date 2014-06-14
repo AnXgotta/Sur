@@ -35,7 +35,10 @@ class USurInventory : public UObject
 		void Initialize(int32 TotalSize);
 
 	UFUNCTION()
-		bool AddItemToInventoryFromItem(ASurItem* NewItem);
+		int32 AddItemToInventoryFromItemStack(ASurItem* NewItem);
+
+	UFUNCTION()
+		int32 AddItemToInventoryFromItemOpen(ASurItem* NewItem);
 
 	UFUNCTION()
 		bool AddItemToInventorySlotFromSlot(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot);
@@ -50,7 +53,10 @@ class USurInventory : public UObject
 	//  HELPER METHODS  ##############################################
 
 	UFUNCTION()
-		USurInventorySlot* FindSlotForNewItem(ASurItem* NewItem);
+		USurInventorySlot* FindStackSlotForNewItem(ASurItem* NewItem);
+
+	UFUNCTION()
+		USurInventorySlot* FindOpenSlotForNewItem(ASurItem* NewItem);
 
 
 };

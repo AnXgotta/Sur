@@ -99,7 +99,7 @@ int32 ASurHUD::CheckCursorInButton(const TArray<FSurButtonStruct>& ButtonArray){
 					ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
 					if (!TheChar) return -1;
 
-					switch (CurDraggedButton->type){
+					switch (CurCheckButton->type){
 					case BUTTONTYPE_ACTIONBAR_SLOT:
 						PRINT_SCREEN("Dropped into Action Slot");
 						TheChar->HandleInventoryUITransaction(CurInventorySlot, TheChar->ActionBar->Inventory[CurCheckButton->index]);
@@ -127,14 +127,12 @@ int32 ASurHUD::CheckCursorInButton(const TArray<FSurButtonStruct>& ButtonArray){
 					if (TheChar->ActionBar->Inventory[CurCheckButton->index]->IsSlotEmpty()) return -1;
 					CurDraggedButton = CurCheckButton;
 					CurInventorySlot = TheChar->ActionBar->Inventory[CurCheckButton->index];
-					DraggedItemTexture = CurInventorySlot->ItemDisplayTexture;
 					break;
 				case BUTTONTYPE_INVENTORY_SLOT:
 					PRINT_SCREEN("Picked Inven Slot");
 					CurDraggedButton = CurCheckButton;
 					if (TheChar->Inventory->Inventory[CurCheckButton->index]->IsSlotEmpty()) return -1;
 					CurInventorySlot = TheChar->Inventory->Inventory[CurCheckButton->index];
-					DraggedItemTexture = CurInventorySlot->ItemDisplayTexture;
 					break;
 				default:
 					break;
@@ -297,10 +295,10 @@ void ASurHUD::DrawCursor(){
 	float CursorHeight = ((0.05 * Y) * SY);
 	float CursorWidth = (0.5f * ScreenRes.X / ScreenDivisor);
 
-	if (bIsDraggingButton && DraggedItemTexture){
+	if (bIsDraggingButton && CurInventorySlot){
 		float TextureHeight = ((0.1 * Y) * SY);
 		float TextureWidth = (1.0f * ScreenRes.X / ScreenDivisor);
-		VDrawTile(DraggedItemTexture, MouseLocation.X - (0.5f * TextureWidth), MouseLocation.Y - (0.5f * TextureHeight), TextureWidth, TextureHeight, FColorBlack);
+		VDrawTile(CurInventorySlot->ItemDisplayTexture, MouseLocation.X - (0.5f * TextureWidth), MouseLocation.Y - (0.5f * TextureHeight), TextureWidth, TextureHeight, FColorBlack);
 	}
 
 	

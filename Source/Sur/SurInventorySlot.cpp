@@ -124,8 +124,10 @@ int32  USurInventorySlot::AddItemToSlot(ASurItem* NewItem){
 	if ((NumberItemsStacked + NewItem->CurrentItemCount) > MaxStackableInSlot){
 		OverflowItemCount = FMath::Max((NumberItemsStacked + NewItem->CurrentItemCount) - MaxStackableInSlot, 0);
 		NumberItemsStacked = MaxStackableInSlot;
+		NewItem->CurrentItemCount = OverflowItemCount;
 	}else{
 		NumberItemsStacked += NewItem->CurrentItemCount;
+		NewItem->CurrentItemCount = 0;
 	}
 
 	return OverflowItemCount;

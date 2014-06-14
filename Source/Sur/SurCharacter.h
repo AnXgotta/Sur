@@ -130,8 +130,14 @@ class ASurCharacter : public ACharacter
 	UPROPERTY(Transient, Replicated)
 		USurInventory* ActionBar;
 
-	UPROPERTY()
+	UPROPERTY(Transient, Replicated)
 		int32 ActionBarIndex;
+
+	UFUNCTION()
+		void AdjustActionBarIndex(int32 Adjust);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void ServerAdjustActionBarIndex(int32 Adjust);
 
 	// keep tabs on currently selected item
 	UPROPERTY(Transient, Replicated)
