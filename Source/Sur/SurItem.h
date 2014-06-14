@@ -41,7 +41,7 @@ public:
 		FName UIName;
 
 	UPROPERTY(EditDefaultsOnly, Category = Configuration)
-		UTexture* UITexture;
+		UTexture2D* UITexture;
 
 	UPROPERTY(EditDefaultsOnly, Category = Configuration)
 		int32 CurrentItemCount;

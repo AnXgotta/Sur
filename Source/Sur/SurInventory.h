@@ -32,17 +32,19 @@ class USurInventory : public UObject
 		bool IsFull();
 
 	UFUNCTION()
-		void Initialize();
+		void Initialize(int32 TotalSize);
 
 	UFUNCTION()
 		bool AddItemToInventoryFromItem(ASurItem* NewItem);
 
 	UFUNCTION()
-		bool AddItemToInventoryFromSlot(USurInventorySlot* NewItem);
+		bool AddItemToInventorySlotFromSlot(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot);
 
 	UFUNCTION()
 		void RemoveItemFromInventory(int32 Index);
 
+	UFUNCTION()
+		void MoveItem(int32 FromIndex, int32 ToIndex);
 
 
 	//  HELPER METHODS  ##############################################

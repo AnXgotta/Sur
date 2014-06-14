@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/HUD.h"
+#include "SurInventorySlot.h"
 #include "SurHUD.generated.h"
 
 USTRUCT()
@@ -16,6 +17,7 @@ struct FSurButtonStruct {
 	float maxX;
 	float minY;
 	float maxY;
+	int32 index;
 
 	//~
 
@@ -28,6 +30,7 @@ struct FSurButtonStruct {
 		maxX = 0;
 		minY = 0;
 		maxY = 0;
+		index = -1;
 	}
 };
 
@@ -37,7 +40,15 @@ class ASurHUD : public AHUD
 {
 	GENERATED_UCLASS_BODY()
 
-	//  BOOLEAN DRAW PROPERTIES
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Materials)
+	UMaterialInterface* MaterialBackground;
+
+	virtual void DrawHUD() OVERRIDE;
+	virtual void PostInitializeComponents() OVERRIDE;
+
+	APlayerController* ThePC;
+
+	//  DRAW STATES  ######################################################################
 
 	UPROPERTY()
 	bool bDrawInventory;
@@ -48,10 +59,16 @@ class ASurHUD : public AHUD
 	UPROPERTY()
 		bool bDrawHUD;
 
-	/* Draw Hud? */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Options)
-		bool DontDrawHUD;
 
+	//  INTERACTION STATES  ###############################################################
+
+	UPROPERTY()
+		bool bIsHoldingLMB;
+
+
+
+
+	//  TEXT  ############################################################################
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SurHUD)
 	UFont* UIFont;
@@ -60,61 +77,79 @@ class ASurHUD : public AHUD
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SurHUD)
 		float DefaultFontScale;
 
+
+	//  HUD SCALE
+
+public:
+
+	FVector2D ScreenRes;
+	float ScreenDivisor;
+	float ScreenHWRatio;
+
+
+	UFUNCTION(BlueprintCallable, Category = ScreenResolution)
+		void SetScreenResolution(float ScreenX, float ScreenY);
+
+
 	/** HUD Scaling */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SurHUD)
 		float GlobalHUDMult;
 
-	/** Button */
+
+	//  BUTTONS  ##########################################################
+
+	TArray<FSurButtonStruct> ButtonsActionBar;
+	TArray<FSurButtonStruct> ButtonsInventory;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = T2D)
+		UTexture2D* InventorySlotBackground;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = T2D)
 		UTexture2D* ButtonBackground;
 
-	/** Cursor */
+
+	
+
+	//  CURSOR  #############################################################
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = T2D)
 		UTexture2D* CursorMain;
 
-	/** Hovering */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = T2D)
-		UTexture2D* CursorHoveringButton;
+	
 
-
-
-	/** Events */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Materials)
-		UMaterialInterface* MaterialBackground;
-
-	//Cursor
-public:
 	FVector2D MouseLocation;
-	void DrawHUD_DrawCursor();
 
-	//Buttons
-public:
-	TArray<FSurButtonStruct> ButtonsMain;
-	TArray<FSurButtonStruct> ButtonsConfirm;
+	void DrawCursor();
 
-	//Cursor In buttons
-	void DrawHUD_CheckCursorInButtons();
-	void CheckCursorInButtonsMain();
-	void CheckCursorInButtonsConfirm();
+
+	//  INTERACTION  #########################################################
 
 	const FSurButtonStruct* CurCheckButton;
+	const FSurButtonStruct* CurDraggedButton;
+	USurInventorySlot* CurInventorySlot;
+	UPROPERTY()
+		UTexture2D* DraggedItemTexture;
+	bool bIsDraggingButton;
 	int32 CheckCursorInButton(const TArray<FSurButtonStruct>& ButtonArray);
 	int32 ClickedButtonType;
-	//States
-	bool ConfirmDialogOpen;
-	bool InMainMenu;
 
-	int32 		ActiveButton_Type;
-	FString 	ActiveButton_Tip;
-	bool CursorHoveringInButton;
+	int32 ActiveButton_Type;
+	FString ActiveButton_Tip;
 
+	// INPUT  #####################################################################
 
+	void PlayerInputChecks();
 
-	//Colors
+	void ResetStateInfo();
+	
+
+	//  STATIC COLORS  ################################################################
+
 public:
 	const FLinearColor * ColorPtr;
 
-	//Colors
 	static const FColor		FColorBlack;
 	static const FColor		FColorRed;
 	static const FColor		FColorYellow;
@@ -125,17 +160,26 @@ public:
 	static const FLinearColor LC_Pink;
 	static const FLinearColor LC_Red;
 	static const FLinearColor LC_Yellow;
-	//FString
-public:
+	static const FLinearColor LC_Transparent;
 
-	//`Titles
-	static const FString S_Title_Main;
-	static const FString S_Title_Confirm;
-	//`Button Text
-	static const FString S_Button_Restart;
-	static const FString S_Button_Exit;
+	//  DRAWING  ##################################################################
 
-	// Utility 
+	void DrawHUD_DrawDialogs();
+
+	void DrawActionBar();
+
+	void DrawInventory();
+
+	void DrawCrosshair();
+
+	void DrawToolTip();
+
+	
+
+
+
+
+	// UTILITY  ######################################################################
 
 	//Stop Camera From Moving With Mouse
 	FORCEINLINE void SetCursorMoveOnly(bool CursorOnly)
@@ -251,7 +295,7 @@ public:
 		if (!tex) return;
 		//~
 
-		Canvas->SetDrawColor(TheColor);
+		//Canvas->SetDrawColor(TheColor);
 
 		//Draw
 		Canvas->DrawTile(
@@ -269,30 +313,6 @@ public:
 	//~
 
 	//Draw
-public:
-	void DrawHUD_DrawDialogs();
-
-	//Menus
-	void DrawMainMenu();
-	void DrawConfirm();
-
-	//Buttons
-	void DrawMainMenuButtons();
-	void DrawConfirmButtons();
-public:
-	void DrawToolTip();
-
-	//Core
-public:
-	APlayerController* ThePC;
-	void PlayerInputChecks();
-protected:
-	//Draw HUD
-	void DrawHUD_Reset();
-	virtual void DrawHUD() OVERRIDE;
-
-	/** after all game elements are created */
-	virtual void PostInitializeComponents() OVERRIDE;
 
 
 

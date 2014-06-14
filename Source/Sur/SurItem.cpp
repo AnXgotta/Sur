@@ -12,9 +12,6 @@ ASurItem::ASurItem(const class FPostConstructInitializeProperties& PCIP)
 	Mesh->SetOnlyOwnerSee(false);
 	Mesh->bCastDynamicShadow = true;
 	Mesh->CastShadow = true;
-	//Mesh->BodyInstance.SetObjectType(ECC_WorldDynamic);
-	//Mesh->BodyInstance.SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	//Mesh->BodyInstance.SetResponseToAllChannels(ECR_Block);
 	Mesh->BodyInstance.SetObjectType(ECC_WorldDynamic);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	Mesh->BodyInstance.SetResponseToAllChannels(ECR_Block);

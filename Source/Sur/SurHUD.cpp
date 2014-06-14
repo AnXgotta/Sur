@@ -1,14 +1,13 @@
 
 
 #include "Sur.h"
+#include "SurCharacter.h"
 #include "SurHUD.h"
 
 
-#define BUTTONTYPE_MAIN_RESTART 	1
-#define BUTTONTYPE_MAIN_EXIT 		2
+#define BUTTONTYPE_INVENTORY_SLOT 	1
+#define BUTTONTYPE_ACTIONBAR_SLOT	2
 
-#define BUTTONTYPE_CONFIRM_YES 	1
-#define BUTTONTYPE_CONFIRM_NO 	2
 
 #define CANVAS_WHITE if(Canvas) Canvas->SetDrawColor(FColor_White);
 
@@ -21,11 +20,6 @@
 //Static Consts
 
 
-const FString ASurHUD::S_Title_Main = FString("Sur!");
-const FString ASurHUD::S_Title_Confirm = FString("Exit Game?");
-
-const FString ASurHUD::S_Button_Restart = FString("Restart");
-const FString ASurHUD::S_Button_Exit = FString("Exit");
 
 // Colors 
 const FColor ASurHUD::FColorBlack = FColor(0, 0, 0, 255);
@@ -38,6 +32,7 @@ const FLinearColor ASurHUD::LC_Black = FLinearColor(0, 0, 0, 1);
 const FLinearColor ASurHUD::LC_Pink = FLinearColor(1, 0, 1, 1);
 const FLinearColor ASurHUD::LC_Red = FLinearColor(1, 0, 0, 1);
 const FLinearColor ASurHUD::LC_Yellow = FLinearColor(1, 1, 0, 1);
+const FLinearColor ASurHUD::LC_Transparent = FLinearColor(0, 0, 0, 0);
 
 ASurHUD::ASurHUD(const class FPostConstructInitializeProperties& PCIP)
 	: Super(PCIP)
@@ -46,16 +41,16 @@ ASurHUD::ASurHUD(const class FPostConstructInitializeProperties& PCIP)
 
 	bDrawChat = false;
 	bDrawInventory = false;
-	bDrawHUD = false;
-
-	//States
-	ConfirmDialogOpen = false;
-	InMainMenu = true;
+	bDrawHUD = true;
+	bIsHoldingLMB = false;
+	bIsDraggingButton = false;
 
 	//Scale
 	GlobalHUDMult = 1;
 	DefaultFontScale = 0.7;   //scaling down a size 36 font
-
+	ScreenHWRatio = 1.0f;
+	ScreenDivisor = 16.0f;
+	ScreenRes = FVector2D(0.0f, 0.0f);
 }
 
 //Core 
@@ -67,6 +62,7 @@ void ASurHUD::PostInitializeComponents()
 	//Establish the PC
 	ThePC = GetOwningPlayerController();
  
+
 	//How to get a ref to your custom PC
 	//AYourPlayerController* YourChar = Cast<AYourPlayerController>(ThePC);
  
@@ -75,196 +71,78 @@ void ASurHUD::PostInitializeComponents()
  
 }
  
-//===============
-// Draw Dialogs
-//===============
-void ASurHUD::DrawHUD_DrawDialogs()
-{
-	DrawMainMenu();
-	if(ConfirmDialogOpen) DrawConfirm();
-}
-//Menus
-void ASurHUD::DrawMainMenu()
-{
-	//Background
-	DrawMaterialSimple(
-		MaterialBackground, 
-		10, 10, 
-		256, 
-		512,
-		1.3
-	);
- 
-	//Menu Title
- 
-	//Draw buttons
-	DrawMainMenuButtons();
-}
-void ASurHUD::DrawConfirm()
-{
-	//Blue rect with alpha 50%
-	DrawSurRect(Canvas->SizeX/2 - 100, Canvas->SizeY/2 - 50,200,100,FLinearColor(0,0,1,0.2333));
- 
-	//Confirm Title
- 
-	//Draw buttons
-	DrawConfirmButtons();
-}
- 
-//Buttons
-void ASurHUD::DrawMainMenuButtons()
-{
-	//Start Point
-	float xStart = 100;
-	float yStart = 110;
- 
-	//Background
-	VDrawTile(ButtonBackground,xStart,yStart,150,80,FColor(255,255,255,120)); //alpha 120/255
- 
-	//Text
-	DrawSurText(
-		UIFont,"Restart",xStart+30,yStart+20,
-		LC_Black, DefaultFontScale,
-		true,LC_Red
-	);
- 
-	//Struct
-	//Add Button If Necessary
-	//		could be cleared and need refreshing if using a different menu
-	//			clear buttons with ButtonsMain.Empty()
-	if (ButtonsMain.Num() < 1 )
-	{
-		FSurButtonStruct newButton = FSurButtonStruct();
-		newButton.type 			= BUTTONTYPE_MAIN_RESTART;
-		newButton.toolTip		= "Restart the Game!";	
-		newButton.minX 			= xStart;
-		newButton.maxX 			= xStart + 150;		
-		newButton.minY 			= yStart;
-		newButton.maxY 			= yStart + 80;
- 
-		//Add to correct array
-		ButtonsMain.Add(newButton);
-	}
- 
- 
-	xStart = 100;
-	yStart = 410;
- 
-	VDrawTile(ButtonBackground,xStart,yStart,150,80,FColor(255,255,255,120)); //alpha 120/255
- 
-	//Text
-	DrawSurText(
-		UIFont,"Exit",xStart+55,yStart+20,
-		LC_Black, DefaultFontScale,
-		true,LC_Red
-	);
- 
-	if (ButtonsMain.Num() < 2 )
-	{
-		FSurButtonStruct newButton = FSurButtonStruct();
-		newButton.type 			= BUTTONTYPE_MAIN_EXIT;
-		newButton.toolTip			= "Exit the Game!";	
-		newButton.minX 			= xStart;
-		newButton.maxX 			= xStart + 150;		
-		newButton.minY 			= yStart;
-		newButton.maxY 			= yStart + 80;
- 
-		//Add to correct array
-		ButtonsMain.Add(newButton);
-	}
-}
-void ASurHUD::DrawConfirmButtons()
-{
-	float xStart = Canvas->SizeX/2 - 100;
-	float yStart = Canvas->SizeY/2 - 40;
- 
-	//Highlighted?
-	if(ActiveButton_Type == BUTTONTYPE_CONFIRM_YES ) ColorPtr = &LC_Pink;
-	else ColorPtr = &LC_Yellow;
- 
-	//Text
-	DrawSurText(
-		UIFont,"Yes",xStart+30,yStart+20,
-		*ColorPtr, DefaultFontScale,
-		true
-	);
- 
-	if (ButtonsConfirm.Num() < 1 )
-	{
-		FSurButtonStruct newButton = FSurButtonStruct();
-		newButton.type 			= BUTTONTYPE_CONFIRM_YES ;
-		newButton.toolTip			= "";	
-		newButton.minX 			= xStart;
-		newButton.maxX 			= xStart + 75;		
-		newButton.minY 			= yStart + 20;
-		newButton.maxY 			= yStart + 60;
- 
-		//could use GetTextSize to streamline this
- 
-		//Add to correct array
-		ButtonsConfirm.Add(newButton);
-	}
- 
-	xStart = Canvas->SizeX/2 + 20;
-	yStart = Canvas->SizeY/2 - 40;
- 
-	//Highlighted?
-	if(ActiveButton_Type == BUTTONTYPE_CONFIRM_NO) ColorPtr = &LC_Black;
-	else ColorPtr = &LC_Yellow;
- 
-	//Text
-	DrawSurText(
-		UIFont,"No",xStart+30,yStart+20,
-		*ColorPtr, DefaultFontScale,
-		true
-	);
- 
-	if (ButtonsConfirm.Num() < 2 )
-	{
-		FSurButtonStruct newButton = FSurButtonStruct();
-		newButton.type 			= BUTTONTYPE_CONFIRM_NO;
-		newButton.toolTip			= "";	
-		newButton.minX 			= xStart;
-		newButton.maxX 			= xStart + 75;		
-		newButton.minY 			= yStart + 20;
-		newButton.maxY 			= yStart + 60;
- 
-		//could use GetTextSize to streamline this
- 
-		//Add to correct array
-		ButtonsConfirm.Add(newButton);
-	}
-}
- 
-//===============
-// Cursor In Buttons
-//===============
-int32 ASurHUD::CheckCursorInButton(const TArray<FSurButtonStruct>& ButtonArray)
-{
-	for(int32 b = 0; b < ButtonArray.Num(); b++)
-	{
+
+
+//  Is cursor in a button
+int32 ASurHUD::CheckCursorInButton(const TArray<FSurButtonStruct>& ButtonArray){
+
+	for(int32 b = 0; b < ButtonArray.Num(); b++)	{
 		CurCheckButton = &ButtonArray[b];
  
 		//check cursor in bounds
 		if (CurCheckButton->minX <= MouseLocation.X && MouseLocation.X <= CurCheckButton->maxX &&
-			CurCheckButton->minY <= MouseLocation.Y && MouseLocation.Y <= CurCheckButton->maxY )
-		{
+			CurCheckButton->minY <= MouseLocation.Y && MouseLocation.Y <= CurCheckButton->maxY ){
  
 			//Active Button Type
 			ActiveButton_Type = CurCheckButton->type; 
  
 			//Tool Tip
 			ActiveButton_Tip = CurCheckButton->toolTip; 
- 
-			//Change Cursor
-			CursorHoveringInButton = true;
- 
-			//Mouse Clicked?
-			if (ThePC->WasInputKeyJustPressed(EKeys::LeftMouseButton))
-			{
-				return ActiveButton_Type;
-				//~~
-				//no need to check rest of buttons
+
+			if (bIsDraggingButton){
+				if (ThePC->WasInputKeyJustReleased(EKeys::LeftMouseButton)){
+					bIsDraggingButton = false;
+					PRINT_SCREEN("Drag Released");
+					// drop in same slot, or no button being dragged - return
+					if (!CurInventorySlot || !CurDraggedButton || CurDraggedButton == CurCheckButton) return -1;
+
+					ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
+					if (!TheChar) return -1;
+
+					switch (CurDraggedButton->type){
+					case BUTTONTYPE_ACTIONBAR_SLOT:
+						PRINT_SCREEN("Dropped into Action Slot");
+						TheChar->HandleInventoryUITransaction(CurInventorySlot, TheChar->ActionBar->Inventory[CurCheckButton->index]);
+						break;
+					case BUTTONTYPE_INVENTORY_SLOT:
+						PRINT_SCREEN("Dropped into Inven Slot");
+						TheChar->HandleInventoryUITransaction(CurInventorySlot, TheChar->Inventory->Inventory[CurCheckButton->index]);
+						break;
+					default:
+						break;
+					}
+
+					CurInventorySlot = NULL;
+					CurDraggedButton = NULL;
+
+				}
+			}else if (ThePC->WasInputKeyJustPressed(EKeys::LeftMouseButton)){
+				PRINT_SCREEN("Drag/Click Started");
+				ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
+				if (!TheChar) return -1;
+
+				switch (CurCheckButton->type){
+				case BUTTONTYPE_ACTIONBAR_SLOT:
+					PRINT_SCREEN("Picked Action Slot");
+					if (TheChar->ActionBar->Inventory[CurCheckButton->index]->IsSlotEmpty()) return -1;
+					CurDraggedButton = CurCheckButton;
+					CurInventorySlot = TheChar->ActionBar->Inventory[CurCheckButton->index];
+					DraggedItemTexture = CurInventorySlot->ItemDisplayTexture;
+					break;
+				case BUTTONTYPE_INVENTORY_SLOT:
+					PRINT_SCREEN("Picked Inven Slot");
+					CurDraggedButton = CurCheckButton;
+					if (TheChar->Inventory->Inventory[CurCheckButton->index]->IsSlotEmpty()) return -1;
+					CurInventorySlot = TheChar->Inventory->Inventory[CurCheckButton->index];
+					DraggedItemTexture = CurInventorySlot->ItemDisplayTexture;
+					break;
+				default:
+					break;
+				}
+
+				bIsDraggingButton = true;
+
+
 			}
 		}
 	}
@@ -272,57 +150,91 @@ int32 ASurHUD::CheckCursorInButton(const TArray<FSurButtonStruct>& ButtonArray)
 	//No Click Occurred This Tick
 	return -1;	
 }
- 
-//Check Confirm
-void ASurHUD::CheckCursorInButtonsConfirm()
-{
-	//Check Confirm Buttons
-	ClickedButtonType = CheckCursorInButton(ButtonsConfirm); //fills global ActiveButton_Type
- 
-	if(ClickedButtonType == BUTTONTYPE_CONFIRM_YES )
-	{
-		ThePC->ConsoleCommand("Exit");
-		return;
+
+
+void ASurHUD::DrawActionBar(){
+	ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
+	if (!TheChar) return;
+	USurInventory* ActionBar = TheChar->ActionBar;
+	if (!ActionBar) return;
+
+	float Y = (ScreenDivisor / ScreenHWRatio);
+	float SY = ScreenRes.Y / Y;
+
+	for (int i = 0; i < ActionBar->Inventory.Num(); i++){
+		FSurButtonStruct NewSlot;
+		NewSlot.type = BUTTONTYPE_ACTIONBAR_SLOT;
+		NewSlot.minX = ( 4.0f * ScreenRes.X / ScreenDivisor) + ((float)i * ScreenRes.X / ScreenDivisor);
+		NewSlot.maxX = (NewSlot.minX + (ScreenRes.X / ScreenDivisor));
+		NewSlot.minY = ((0.875 * Y ) * SY);
+		NewSlot.maxY = (NewSlot.minY + SY);
+		NewSlot.index = i;
+
+		VDrawTile(InventorySlotBackground, NewSlot.minX, NewSlot.minY, NewSlot.maxX - NewSlot.minX, NewSlot.maxY - NewSlot.minY, FColorBlack);
+
+		if (!ActionBar->Inventory[i]->IsSlotEmpty()){
+			VDrawTile(ActionBar->Inventory[i]->GetItemDisplayTexture(), NewSlot.minX, NewSlot.minY, NewSlot.maxX - NewSlot.minX, NewSlot.maxY - NewSlot.minY, FColorRed);
+			DrawSurText(UIFont, FString::FromInt(ActionBar->Inventory[i]->NumberItemsStacked), NewSlot.minX, NewSlot.minY, FColorRed, 0.5f);
+			NewSlot.toolTip = ActionBar->Inventory[i]->GetItemName().ToString();
+		}
+
+		if (i == TheChar->ActionBarIndex){
+			DrawSurText(UIFont, "E", NewSlot.minX + ((NewSlot.maxX - NewSlot.minX) / 2.0f), NewSlot.minY + ((NewSlot.maxY - NewSlot.minY) / 2.0f), FColorRed, 0.5f);
+		}
+
+		ButtonsActionBar.Add(NewSlot);
 	}
-	if(ClickedButtonType == BUTTONTYPE_CONFIRM_NO)
-	{
-		ConfirmDialogOpen = false;
-		ButtonsConfirm.Empty(); //Buttons not needed anymore
-		return;
+
+	CheckCursorInButton(ButtonsActionBar);
+
+}
+
+void ASurHUD::DrawInventory(){
+	ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
+	if (!TheChar) return;
+	USurInventory* Inventory = TheChar->Inventory;
+	if (!Inventory) return;
+
+	
+
+	float posX = 0.0f;
+	float posY = 0.0f;
+
+	int slotIndex = 0;
+
+	float Y = (ScreenDivisor / ScreenHWRatio);
+	float SY = ScreenRes.Y / Y;
+
+	for (int i = 0; i < Inventory->Inventory.Num() / 8; i++){
+		for (int j = 0; j < Inventory->Inventory.Num() / 4; j++){
+			FSurButtonStruct NewSlot;
+			NewSlot.type = BUTTONTYPE_INVENTORY_SLOT;
+			NewSlot.minX = (4.0f * ScreenRes.X / ScreenDivisor) + ((float)j * ScreenRes.X / ScreenDivisor);
+			NewSlot.maxX = (NewSlot.minX + (ScreenRes.X / ScreenDivisor));
+			NewSlot.minY = ((0.125 * Y) * SY) + (i * SY);
+			NewSlot.maxY = (NewSlot.minY + SY);
+			NewSlot.index = slotIndex;
+
+			posX += 1.0f;
+
+			VDrawTile(InventorySlotBackground, NewSlot.minX, NewSlot.minY, NewSlot.maxX - NewSlot.minX, NewSlot.maxY - NewSlot.minY, FColorBlack);
+
+			if (!Inventory->Inventory[slotIndex]->IsSlotEmpty()){
+				VDrawTile(Inventory->Inventory[slotIndex]->GetItemDisplayTexture(), NewSlot.minX, NewSlot.minY, NewSlot.maxX - NewSlot.minX, NewSlot.maxY - NewSlot.minY, FColorRed);
+				DrawSurText(UIFont, FString::FromInt(Inventory->Inventory[slotIndex]->NumberItemsStacked), NewSlot.minX, NewSlot.minY, FColorRed, 0.5f);
+				NewSlot.toolTip = Inventory->Inventory[slotIndex]->GetItemName().ToString();
+			}
+
+			ButtonsInventory.Add(NewSlot);
+			++slotIndex;
+		}
+		
 	}
+	DrawCursor();
+	CheckCursorInButton(ButtonsInventory);
 }
  
-//Check Buttons
-void ASurHUD::CheckCursorInButtonsMain()
-{
-	//Check Confirm Buttons
-	ClickedButtonType = CheckCursorInButton(ButtonsMain);
- 
-	if(ClickedButtonType == BUTTONTYPE_MAIN_RESTART )
-	{
-		ThePC->ConsoleCommand("RestartLevel");
-		return;
-	}
-	if(ClickedButtonType == BUTTONTYPE_MAIN_EXIT)
-	{
-		ConfirmDialogOpen = true;
-		return;
-	}
-}
-void ASurHUD::DrawHUD_CheckCursorInButtons()
-{
-	if(ConfirmDialogOpen)
-	{
-		CheckCursorInButtonsConfirm();
- 
-		//Take Focus Away From All Other buttons
-		return; 
-		//~
-	}
- 
-	//Main
-	CheckCursorInButtonsMain();
-}
+
  
 void ASurHUD::DrawToolTip()
 {
@@ -371,84 +283,75 @@ void ASurHUD::DrawToolTip()
 		false		//scale position of message with HUD scale
 	);
 }
-void ASurHUD::DrawHUD_DrawCursor()
-{
+
+void ASurHUD::DrawCursor(){
 	//Tool Tip
-	if(ActiveButton_Tip != "") DrawToolTip();
+	//if(ActiveButton_Tip != "") DrawToolTip();
  
-	//Cursor Hovering in a Button?
-	if (CursorHoveringInButton)
-	{
-		//pointer tex found?
-		if (!CursorHoveringButton) return;
-		DrawFullSizeTile(CursorHoveringButton, MouseLocation.X - CURSOR_DRAW_OFFSET, MouseLocation.Y - CURSOR_DRAW_OFFSET, FColor_White );
+
+	//cursor tex found?
+	if(!CursorMain) return;
+
+	float Y = (ScreenDivisor / ScreenHWRatio);
+	float SY = ScreenRes.Y / Y;
+	float CursorHeight = ((0.05 * Y) * SY);
+	float CursorWidth = (0.5f * ScreenRes.X / ScreenDivisor);
+
+	if (bIsDraggingButton && DraggedItemTexture){
+		float TextureHeight = ((0.1 * Y) * SY);
+		float TextureWidth = (1.0f * ScreenRes.X / ScreenDivisor);
+		VDrawTile(DraggedItemTexture, MouseLocation.X - (0.5f * TextureWidth), MouseLocation.Y - (0.5f * TextureHeight), TextureWidth, TextureHeight, FColorBlack);
 	}
- 
-	else
-	{
-		//cursor tex found?
-		if(!CursorMain) return;
-		DrawFullSizeTile(CursorMain, MouseLocation.X - CURSOR_DRAW_OFFSET, MouseLocation.Y - CURSOR_DRAW_OFFSET, FColor_White );
-	}
+
+	
+	VDrawTile(CursorMain, MouseLocation.X - (0.5f * CursorWidth), MouseLocation.Y - (0.5f * CursorHeight), CursorWidth, CursorHeight, FColorBlack);
+	
 }
  
-void ASurHUD::PlayerInputChecks()
-{
-	//check out this tutorial of mine for a list of all EKeys::
-	//http://forums.epicgames.com/threads/972861-Tutorials-C-for-UE4-Code-Samples-gt-gt-New-Video-Freeze-Render-When-Tabbed-Out?p=31660286&viewfull=1#post31660286
- 
-	if(ThePC->WasInputKeyJustPressed(EKeys::Escape))
-	{
-		SetCursorMoveOnly(false);
-		return;
-	}
-	if(ThePC->WasInputKeyJustPressed(EKeys::F))
-	{
+void ASurHUD::DrawCrosshair(){
+	float Y = (ScreenDivisor / ScreenHWRatio);
+	float SY = ScreenRes.Y / Y;
+	float CursorHeight = ((0.05 * Y) * SY);
+	float CursorWidth = (0.5f * ScreenRes.X / ScreenDivisor);
+	VDrawTile(CursorMain, (ScreenRes.X/2.0f) - (0.5f * CursorWidth), (ScreenRes.Y/2.0f) - (0.5f * CursorHeight), CursorWidth, CursorHeight, FColorBlack);
+}
+
+void ASurHUD::PlayerInputChecks(){
+
+	if(ThePC->WasInputKeyJustPressed(EKeys::I))	{
+		ASurCharacter* MyChar = Cast<ASurCharacter >(GetOwningPawn());
+		if (MyChar){
+			if (!MyChar->CanOpenInventoryUI()) return;
+			MyChar->bEnableInput = !MyChar->bEnableInput;
+		}
 		SetCursorMoveOnly(!ThePC->IsLookInputIgnored());
+		bDrawInventory = !bDrawInventory;
 		return;
 	}
-	if(ThePC->WasInputKeyJustPressed(EKeys::H))
-	{
-		DontDrawHUD = !DontDrawHUD;
+
+	if(ThePC->WasInputKeyJustPressed(EKeys::H))	{
+		bDrawHUD = !bDrawHUD;
 		return;
 	}
  
-	//Confirm
-	if(ConfirmDialogOpen)
-	{
-		if(ThePC->WasInputKeyJustPressed(EKeys::Y))
-		{
-			ThePC->ConsoleCommand("Exit"); 
-			//could replace with function based on confirm context
- 
-			return;
-		}
-		if(ThePC->WasInputKeyJustPressed(EKeys::N))
-		{
-			ConfirmDialogOpen = false;
-			ButtonsConfirm.Empty(); //Buttons not needed anymore
-			//Cancel Confirm
- 
-			return;
-		}
-	}
+	
 }
  
-void ASurHUD::DrawHUD_Reset()
-{
+void ASurHUD::ResetStateInfo(){
 	ActiveButton_Type 		= -1;
 	ActiveButton_Tip 		= "";
-	CursorHoveringInButton 	= false;
 }
  
-void ASurHUD::DrawHUD()
-{
-	//==============================
-	//==============================
-	//==============================
+void ASurHUD::SetScreenResolution(float ScreenX, float ScreenY){
+	ScreenRes.X = ScreenX;
+	ScreenRes.Y = ScreenY;
+	ScreenHWRatio = ScreenRes.X / ScreenRes.Y;
+}
+
+void ASurHUD::DrawHUD(){
+
 	//Have PC for Input Checks and Mouse Cursor?
-	if(!ThePC)
-	{
+	if(!ThePC){
 		//Attempt to Reacquire PC
 		ThePC = GetOwningPlayerController();
  
@@ -456,46 +359,49 @@ void ASurHUD::DrawHUD()
 		if(!ThePC) return;
 		//~~
 	}
- 
+
 	//Multiplayer Safety Check
 	if(!ThePC->PlayerInput) return; //not valid for first seconds of a multiplayer client
-	//~~
-	//==============================
-	//==============================
-	//==============================
  
 	//Player Input
 	PlayerInputChecks();
+
+
  
-	//Draw HUD?
-	if(DontDrawHUD) return;
-	//~~
+	
  
 	//Super
 	Super::DrawHUD();
  
 	//No Canvas?
 	if(!Canvas) return;
-	//
+	
+	//Draw HUD?
+	if (bDrawHUD){
+		DrawCrosshair();
+		DrawActionBar();
+	}
+
+	if (bDrawInventory){
+		DrawInventory();
+	}
  
 	//Reset States
-	DrawHUD_Reset();
+	ResetStateInfo();
  
-	//================
-	//Get New Mouse Position
-	//================
+	
+
+	// get mouse position
 	ThePC->GetMousePosition(MouseLocation.X,MouseLocation.Y);
  
 	//Cursor In Buttons
-	DrawHUD_CheckCursorInButtons();
- 
-	//Draw Dialogs
-	//DrawHUD_DrawDialogs();
+	//DrawHUD_CheckCursorInButtons();
+
  
 	//### Do Last ###
 	//Draw Cursor
 	//DrawHUD_DrawCursor();
  
 	//Debugging Info
-	//ThePC->ClientMessage("HUD Loop Completed!");
+	//PRINT_SCREEN("HUD LOOP");
 }

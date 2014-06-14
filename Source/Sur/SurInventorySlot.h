@@ -30,20 +30,20 @@ public:
 		FName GetItemName();
 
 	UFUNCTION(BlueprintCallable, Category = ItemSlot)
-		UTexture* GetItemDisplayTexture();
+		UTexture2D* GetItemDisplayTexture();
 
 	UPROPERTY()
-		UTexture* ItemDisplayTexture;
+		UTexture2D* ItemDisplayTexture;
 
 	// Number Stacked
 	UPROPERTY()
 		int32 NumberItemsStacked;
 
 	UPROPERTY()
-		FVector2D SlotPosition;
+		int32 SlotPosition;
 
 	UFUNCTION(BlueprintCallable, Category = ItemSlot)
-		FVector2D GetSlotPosition();
+		int32 GetSlotPosition();
 	
 
 
@@ -66,6 +66,12 @@ public:
 
 	UFUNCTION()
 		void SetSlotInformation(ASurItem* NewItem);
+
+	UFUNCTION()
+		void SetSlotInformationFromSlot(USurInventorySlot* OtherSlot);
+
+	UFUNCTION()
+		void SwapSlotInformation(USurInventorySlot* OtherSlot);
 
 
 	//  ADD ITEM  ##############################################################################

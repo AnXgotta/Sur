@@ -16,9 +16,13 @@ class ASurBuildableItem : public ASurItem
 
 
 
+	// OVERLAP EVENTS
 
+	UFUNCTION()
+	void OnBeginOverlap(AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-
+	UFUNCTION()
+		void OnEndOverlap(AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 
 

@@ -25,11 +25,11 @@ FName USurInventorySlot::GetItemName(){
 	return TEXT("");
 }
 
-FVector2D USurInventorySlot::GetSlotPosition(){
+int32 USurInventorySlot::GetSlotPosition(){
 	return SlotPosition;
 }
 
-UTexture* USurInventorySlot::GetItemDisplayTexture(){
+UTexture2D* USurInventorySlot::GetItemDisplayTexture(){
 	return ItemDisplayTexture;
 }
 
@@ -70,6 +70,40 @@ void USurInventorySlot::SetSlotInformation(ASurItem* NewItem){
 		MaxStackableInSlot = NewItem->MaxStackable;
 	}
 }
+
+
+void USurInventorySlot::SetSlotInformationFromSlot(USurInventorySlot* OtherSlot){
+	ItemBlueprint = OtherSlot->ItemBlueprint;
+	ItemDisplayName = OtherSlot->ItemDisplayName;
+	ItemDisplayTexture = OtherSlot->ItemDisplayTexture;
+	NumberItemsStacked = OtherSlot->NumberItemsStacked;
+	SlotPosition = OtherSlot->SlotPosition;
+	MaxStackableInSlot = OtherSlot->MaxStackableInSlot;
+}
+
+void USurInventorySlot::SwapSlotInformation(USurInventorySlot* OtherSlot){
+	TSubclassOf<class AActor> tItemBP = OtherSlot->ItemBlueprint;
+	FName tName = OtherSlot->ItemDisplayName;
+	UTexture2D* tTexture = OtherSlot->ItemDisplayTexture;
+	int32 tNumItemStacked = OtherSlot->NumberItemsStacked;
+	int32 tSlotPosition = OtherSlot->SlotPosition;
+	int32 tMaxStackable = OtherSlot->MaxStackableInSlot;
+
+	OtherSlot->ItemBlueprint = ItemBlueprint;
+	OtherSlot->ItemDisplayName = ItemDisplayName;
+	OtherSlot->ItemDisplayTexture = ItemDisplayTexture;
+	OtherSlot->NumberItemsStacked = NumberItemsStacked;
+	OtherSlot->SlotPosition = SlotPosition;
+	OtherSlot->MaxStackableInSlot = MaxStackableInSlot;
+
+	ItemBlueprint = tItemBP;
+	ItemDisplayName = tName;
+	ItemDisplayTexture = tTexture;
+	NumberItemsStacked = tNumItemStacked;
+	SlotPosition = tSlotPosition;
+	MaxStackableInSlot = tMaxStackable;
+}
+
 
 int32 USurInventorySlot::GetNumberItemsStacked(){
 	return NumberItemsStacked;

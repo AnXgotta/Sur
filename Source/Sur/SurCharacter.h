@@ -130,6 +130,9 @@ class ASurCharacter : public ACharacter
 	UPROPERTY(Transient, Replicated)
 		USurInventory* ActionBar;
 
+	UPROPERTY()
+		int32 ActionBarIndex;
+
 	// keep tabs on currently selected item
 	UPROPERTY(Transient, Replicated)
 		ASurItem* CurrentlyTracedItem;
@@ -157,13 +160,8 @@ class ASurCharacter : public ACharacter
 	UFUNCTION(Server, Reliable, WithValidation)
 		void ServerEquipItem(USurInventorySlot* EquipItemSlot);
 
-	// TESTING  ##############################################################################
-
-	UFUNCTION(BlueprintCallable, Category = Inventory)
-		void TestingEquipItem();
-
-	// END TESTING  ##########################################################################
-
+	UFUNCTION()
+		bool CanOpenInventoryUI();
 
 	//  BUILDING  ###########################################################################
 
@@ -207,8 +205,17 @@ class ASurCharacter : public ACharacter
 	UFUNCTION(Server, Reliable, WithValidation)
 		void ServerUseItem();
 
+	UFUNCTION()
+		void HandleInventoryUITransaction(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void ServerHandleInventoryUITransaction(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot);
+
 
 	//  INPUT  ####################################################################################
+
+	UPROPERTY()
+		bool bEnableInput;
 
 	UFUNCTION()
 		void MoveForward(float Val);
@@ -229,9 +236,6 @@ class ASurCharacter : public ACharacter
 		void Interact();
 
 	UFUNCTION()
-		void TestEquip();
-
-	UFUNCTION()
 		void ActionQ();
 
 	UFUNCTION()
@@ -248,6 +252,12 @@ class ASurCharacter : public ACharacter
 
 	UFUNCTION()
 		void MWD();
+
+	UFUNCTION()
+		void Button1();
+
+	UFUNCTION()
+		void Button2();
 
 protected:
 	// APawn interface

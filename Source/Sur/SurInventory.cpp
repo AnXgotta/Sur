@@ -24,13 +24,12 @@ bool USurInventory::IsFull(){
 }
 
 
-void USurInventory::Initialize(){
-	for (int i = 0; i < MaxSize / 16; i++){
-		for (int k = 0; k < MaxSize / 2; k++){
-			USurInventorySlot* NewSlot = NewObject<USurInventorySlot>();
-			NewSlot->SlotPosition = FVector2D((float)k, (float)i);
-			Inventory.Add(NewSlot);
-		}
+void USurInventory::Initialize(int32 TotalSize){
+	MaxSize = TotalSize;
+	for (int i = 0; i < MaxSize; i++){
+		USurInventorySlot* NewSlot = NewObject<USurInventorySlot>();
+		NewSlot->SlotPosition = i;
+		Inventory.Add(NewSlot);
 	}
 }
 
@@ -71,14 +70,24 @@ bool USurInventory::AddItemToInventoryFromItem(ASurItem* NewItem){
 	return true;
 }
 
-bool USurInventory::AddItemToInventoryFromSlot(USurInventorySlot* NewItem){
+
+
+bool USurInventory::AddItemToInventorySlotFromSlot(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot){
 
 	return false;
 }
 
-// TESTING DROPPING FIRST ITEM FOUND IN ARRAY... UI WILL BE USED FOR THIS LATER
+
 void USurInventory::RemoveItemFromInventory(int32 Index){
 	Inventory[Index]->RemoveItemFromSlot(Inventory[Index]->NumberItemsStacked);
+}
+
+
+void USurInventory::MoveItem(int32 FromIndex, int32 ToIndex){
+	if (!Inventory.IsValidIndex(FromIndex) || !Inventory.IsValidIndex(ToIndex)) return;
+
+
+
 }
 
 

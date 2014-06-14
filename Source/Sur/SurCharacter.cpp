@@ -26,12 +26,16 @@ ASurCharacter::ASurCharacter(const class FPostConstructInitializeProperties& PCI
 	Mesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
 	Mesh->PrimaryComponentTick.TickGroup = TG_PrePhysics;
 
-
 	// CHARACTER SET UP
 
 	bIsBuilding = false;
 	BuildingDistanceModifier = 1.0f;
 	BuildingRotationModifier = 0.0f;
+
+
+	bEnableInput = true;
+	ActionBarIndex = 0;
+
 	// Replication
 	bReplicateMovement = true;
 	bReplicates = true;
@@ -47,8 +51,13 @@ void ASurCharacter::PostInitializeComponents(){
 	Super::PostInitializeComponents();
 
 	if (Role == ROLE_Authority){
+
 		Inventory = NewObject<USurInventory>();
-		Inventory->Initialize();
+		ActionBar = NewObject<USurInventory>();
+
+		Inventory->Initialize(32);
+		ActionBar->Initialize(8);
+
 	}
 
 }
@@ -156,10 +165,13 @@ void ASurCharacter::PickUpItem(){
 			return;
 		}
 
-		if (!Inventory->AddItemToInventoryFromItem(CurrentlyTracedItem)){
-			// most likely inventory is full... or an error of some kind
-			PRINT_SCREEN("SurCharacter:  [PickUpItem]  Inventory Full!");
+		if (!ActionBar->AddItemToInventoryFromItem(CurrentlyTracedItem)){
+			if (!Inventory->AddItemToInventoryFromItem(CurrentlyTracedItem)){
+				// most likely inventory is full... or an error of some kind
+				PRINT_SCREEN("SurCharacter:  [PickUpItem]  Inventory Full!");
+			}
 		}
+		
 	}
 	else{
 		ServerPickUpItem();
@@ -216,59 +228,57 @@ void ASurCharacter::ServerDropEquippedItem_Implementation(){
 	DropEquippedItem();
 }
 
-
-
-//  TESTING ################################################################
-
-
-void ASurCharacter::TestingEquipItem(){
-	PRINT_SCREEN("ASurCharacter [TestintEquipItem] Called");
-	for (int i = 0; i < Inventory->MaxSize; i++){
-		if (!Inventory->Inventory[i]->IsSlotEmpty()){
-			EquipItem(Inventory->Inventory[i]);
-			return;
-		}
-	}
+bool ASurCharacter::CanOpenInventoryUI(){
+	return !bIsBuilding;
 }
-
-//  END TESTING  ###########################################################
 
 //  BUILDING  ##############################################################
 
 void ASurCharacter::BuildingTickHandle(){
 	if (!bIsBuilding) return;
 
+	FVector CurrentBuildPosition = CapsuleComponent->GetComponentLocation() + CapsuleComponent->GetForwardVector() * (300.0f * BuildingDistanceModifier);
+	FRotator CurrentBuildRotation = Mesh->GetSocketRotation(RIGHT_HAND_SOCKET) + FRotator(0.0f, BuildingRotationModifier, 0.0f);
+
+
+
+	FVector CameraLocation;
+	FRotator CameraRotation;
+	Controller->GetPlayerViewPoint(CameraLocation, CameraRotation);
+
+	const FVector StartPoint = CameraLocation;
+	const FVector EndPoint = CameraLocation + (CameraRotation.Vector() * 800.0f);
+
+
 	FHitResult HitOut;
+	HitOut = FHitResult(ForceInit);
 	ECollisionChannel traceCollisionChannel = ECC_WorldStatic;
-	FCollisionQueryParams traceParams(FName(TEXT("Interaction Trace")), true, NULL);
+	FCollisionQueryParams traceParams(FName(TEXT("Build Trace")), true, NULL);
 	traceParams.bTraceComplex = true;
 	traceParams.AddIgnoredActor(CurrentlyEquippedItem);
+	traceParams.AddIgnoredActor(this);
 
-	FVector ItemLocation = CurrentlyEquippedItem->GetActorLocation();
-	FVector EndPoint = ItemLocation + (CurrentlyEquippedItem->GetActorUpVector() * 500.0f);
-	FVector* HitNormal = NULL;
 
-	if (GetWorld()->LineTraceSingle(HitOut, ItemLocation, EndPoint, traceCollisionChannel, traceParams)){
-		HitNormal = &HitOut.ImpactNormal;
+
+	if (GetWorld()->LineTraceSingle(HitOut, StartPoint, EndPoint, traceCollisionChannel, traceParams)){
+		//CurrentlyEquippedItem->SetActorHiddenInGame(true);
+		CurrentBuildPosition = HitOut.Location + FVector(0.0f, 0.0f, CurrentlyEquippedItem->Mesh->Bounds.BoxExtent.Z);
+		CurrentlyEquippedItem->SetActorRotation(HitOut.Normal.Rotation());
+	}
+	else{
+		//CurrentlyEquippedItem->SetActorHiddenInGame(false);
 	}
 
-	FRotator CurrentBuildRotation = FRotator::ZeroRotator;
-	if (HitNormal){
-		CurrentBuildRotation = HitNormal->Rotation();
-	}
-	FVector DefaultBuildPosition = CapsuleComponent->GetForwardVector() * 300.0f;
-	FVector CurrentBuildPosition = CapsuleComponent->GetComponentLocation() + (DefaultBuildPosition * BuildingDistanceModifier);
 
-	CurrentBuildRotation.Pitch = CurrentBuildRotation.Pitch + BuildingRotationModifier;
 
-	CurrentBuildPosition.Z = CurrentlyEquippedItem->Mesh->Bounds.SphereRadius/2.0f;
+	
 
 	CurrentlyEquippedItem->SetActorLocation(CurrentBuildPosition);
-	CurrentlyEquippedItem->SetActorRelativeRotation(CurrentBuildRotation);
+	CurrentlyEquippedItem->SetActorRotation(CurrentBuildRotation);
 
 }
 
-// [server[
+// [server]
 void ASurCharacter::BuildProcessBegin(){
 	bIsBuilding = true;
 
@@ -348,12 +358,32 @@ void ASurCharacter::OnRep_CurrentlyEquippedItem(ASurItem* LastEquippedItem){
 }
 
 void ASurCharacter::EquipItem(USurInventorySlot* EquipItemSlot){
-	if (!EquipItemSlot || EquipItemSlot->IsSlotEmpty()) return;
+	if (!EquipItemSlot) return;
 	if (!Mesh) return;
 
 	if (Role < ROLE_Authority){
-		PRINT_SCREEN("ASurCharacter [EquipItem] Client");
 		ServerEquipItem(EquipItemSlot);
+	}
+	else{
+		// unequip current item
+		if (CurrentlyEquippedItem){
+			CurrentlyEquippedItem->OnItemUnEquipped();
+		}
+
+		if (!EquipItemSlot || EquipItemSlot->IsSlotEmpty()) return;
+
+		UWorld* const World = GetWorld();
+		if (World){
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Instigator = this;
+			ASurItem* NewSpawnedItem = World->SpawnActor<ASurItem>(EquipItemSlot->ItemBlueprint, Mesh->GetSocketLocation(RIGHT_HAND_SOCKET), Mesh->GetSocketRotation(RIGHT_HAND_SOCKET));
+			if (NewSpawnedItem){
+				CurrentlyEquippedItem = NewSpawnedItem;
+				CurrentlyEquippedItem->OnItemEquipped();
+				CurrentlyEquippedInventorySlot = EquipItemSlot;
+				CurrentlyEquippedItem->Mesh->AttachTo(Mesh, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
+			}
+		}
 	}
 }
 
@@ -362,29 +392,46 @@ bool ASurCharacter::ServerEquipItem_Validate(USurInventorySlot* EquipItemSlot){
 }
 
 void ASurCharacter::ServerEquipItem_Implementation(USurInventorySlot* EquipItemSlot){
-	// unequip current item
-	if (CurrentlyEquippedItem){
-		CurrentlyEquippedItem->OnItemUnEquipped();
-	}
-
-	if (!EquipItemSlot || EquipItemSlot->IsSlotEmpty()) return;
-
-	UWorld* const World = GetWorld();
-	if (World){
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Instigator = this;
-		ASurItem* NewSpawnedItem = World->SpawnActor<ASurItem>(EquipItemSlot->ItemBlueprint, Mesh->GetSocketLocation(RIGHT_HAND_SOCKET), Mesh->GetSocketRotation(RIGHT_HAND_SOCKET));
-		if (NewSpawnedItem){			
-			CurrentlyEquippedItem = NewSpawnedItem;
-			CurrentlyEquippedItem->OnItemEquipped();
-			CurrentlyEquippedInventorySlot = EquipItemSlot;
-			CurrentlyEquippedItem->Mesh->AttachTo(Mesh, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
-			PRINT_SCREEN("SurCharacter [EquipItem]  Fully Equipped");
-		}
-	}
-	PRINT_SCREEN("ASurCharacter [ServerEquipItem_Implementation] Server");
+	EquipItem(EquipItemSlot);
 }
 
+void ASurCharacter::HandleInventoryUITransaction(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot){
+	if (!FromSlot || !ToSlot) return;
+
+	if (Role < ROLE_Authority){
+		ServerHandleInventoryUITransaction(FromSlot, ToSlot);
+		return;
+	}
+	if (ToSlot->IsSlotEmpty()){
+		ToSlot->SetSlotInformationFromSlot(FromSlot);
+		FromSlot->ClearSlotInformation();
+		PRINT_SCREEN("SurCharacter [HandleIUIT] To Empty Slot");
+	}else if (FromSlot->ItemBlueprint == ToSlot->ItemBlueprint){
+		if (FromSlot->NumberItemsStacked <= ToSlot->SpaceRemaining()){
+			ToSlot->NumberItemsStacked += FromSlot->NumberItemsStacked;
+			FromSlot->ClearSlotInformation();
+			PRINT_SCREEN("SurCharacter [HandleIUIT] To Same Type Slot");
+		}else{
+			FromSlot->NumberItemsStacked -= ToSlot->SpaceRemaining();
+			ToSlot->NumberItemsStacked = ToSlot->MaxStackableInSlot;
+			PRINT_SCREEN("SurCharacter [HandleIUIT] To Same Type Slot Filled");
+		}
+	}
+	else{
+		ToSlot->SwapSlotInformation(FromSlot);
+		PRINT_SCREEN("SurCharacter [HandleIUIT] To Swapped Slot");
+	}
+
+
+}
+
+bool ASurCharacter::ServerHandleInventoryUITransaction_Validate(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot){
+	return true;
+}
+
+void ASurCharacter::ServerHandleInventoryUITransaction_Implementation(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot){
+	HandleInventoryUITransaction(FromSlot, ToSlot);
+}
 
 //  INPUT  ################################################################################
 
@@ -396,13 +443,15 @@ void ASurCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	InputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	InputComponent->BindAction("Interact", IE_Pressed, this, &ASurCharacter::Interact);
 	InputComponent->BindAction("Drop", IE_Pressed, this, &ASurCharacter::Drop);
-	InputComponent->BindAction("TestEquip", IE_Pressed, this, &ASurCharacter::TestEquip);
 	InputComponent->BindAction("Q", IE_Pressed, this, &ASurCharacter::ActionQ);
 	InputComponent->BindAction("E", IE_Pressed, this, &ASurCharacter::ActionE);
 	InputComponent->BindAction("LMB", IE_Pressed, this, &ASurCharacter::LMB);
 	InputComponent->BindAction("RMB", IE_Pressed, this, &ASurCharacter::RMB);
 	InputComponent->BindAction("MWU", IE_Pressed, this, &ASurCharacter::MWU);
 	InputComponent->BindAction("MWD", IE_Pressed, this, &ASurCharacter::MWD);
+
+	InputComponent->BindAction("Button1", IE_Pressed, this, &ASurCharacter::Button1);
+	InputComponent->BindAction("Button2", IE_Pressed, this, &ASurCharacter::Button2);
 
 	InputComponent->BindAxis("MoveForward", this, &ASurCharacter::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &ASurCharacter::MoveRight);
@@ -411,9 +460,7 @@ void ASurCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
 	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
 	InputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	InputComponent->BindAxis("TurnRate", this, &ASurCharacter::TurnAtRate);
 	InputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-	InputComponent->BindAxis("LookUpRate", this, &ASurCharacter::LookUpAtRate);
 }
 
 
@@ -421,6 +468,7 @@ void ASurCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 
 
 void ASurCharacter::MoveForward(float Value){
+	if (!bEnableInput) return;
 	if (Value != 0.0f){
 		// add movement in that direction
 		AddMovementInput(GetActorForwardVector(), Value);
@@ -428,6 +476,7 @@ void ASurCharacter::MoveForward(float Value){
 }
 
 void ASurCharacter::MoveRight(float Value){
+	if (!bEnableInput) return;
 	if (Value != 0.0f){
 		// add movement in that direction
 		AddMovementInput(GetActorRightVector(), Value);
@@ -435,29 +484,29 @@ void ASurCharacter::MoveRight(float Value){
 }
 
 void ASurCharacter::TurnAtRate(float Rate){
+	if (!bEnableInput) return;
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
 }
 
 void ASurCharacter::LookUpAtRate(float Rate){
+	if (!bEnableInput) return;
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
 void ASurCharacter::Drop(){
+	if (!bEnableInput) return;
 	DropEquippedItem();
 }
 
 void ASurCharacter::Interact(){
+	if (!bEnableInput) return;
 	PickUpItem();
 }
 
-void ASurCharacter::TestEquip(){
-	PRINT_SCREEN("ASurCharacter [TestEquip] Called");
-	TestingEquipItem();
-}
-
 void ASurCharacter::ActionQ(){
+	if (!bEnableInput) return;
 	if (bIsBuilding){
 		PRINT_SCREEN("SurCharacter [ActionQ] Pressed");
 		BuildingRotationModifier = FMath::Min(BuildingRotationModifier + 5.0f, 180.0f);
@@ -465,6 +514,7 @@ void ASurCharacter::ActionQ(){
 }
 
 void ASurCharacter::ActionE(){
+	if (!bEnableInput) return;
 	if (bIsBuilding){
 		PRINT_SCREEN("SurCharacter [ActionE] Pressed");
 		BuildingRotationModifier = FMath::Max(BuildingRotationModifier - 5.0f, -180.0f);
@@ -472,26 +522,61 @@ void ASurCharacter::ActionE(){
 }
 
 void ASurCharacter::LMB(){
+	if (!bEnableInput) return;
 	UseItem();
 }
 
 void ASurCharacter::RMB(){
+	if (!bEnableInput) return;
 
 }
 
 void ASurCharacter::MWU(){
+	if (!bEnableInput) return;
 	if (bIsBuilding){
 		PRINT_SCREEN("SurCharacter [MWU] Pressed");
-		BuildingDistanceModifier = FMath::Min(BuildingDistanceModifier + 0.1f, 1.5f);
+		BuildingDistanceModifier = FMath::Min(BuildingDistanceModifier + 0.05f, 1.5f);
+	}
+	else{
+		++ActionBarIndex;
+		if (ActionBarIndex >= ActionBar->MaxSize){
+			ActionBarIndex = 0;
+		}
+
+		EquipItem(ActionBar->Inventory[ActionBarIndex]);
+
 	}
 }
 
 void ASurCharacter::MWD(){
+	if (!bEnableInput) return;
 	if (bIsBuilding){
 		PRINT_SCREEN("SurCharacter [MWD] Pressed");
-		BuildingDistanceModifier = FMath::Max(BuildingDistanceModifier - 0.1f, 0.5f);
+		BuildingDistanceModifier = FMath::Max(BuildingDistanceModifier - 0.05f, 0.5f);
+	}
+	else{
+		--ActionBarIndex;
+		if (ActionBarIndex < 0){
+			ActionBarIndex = ActionBar->MaxSize - 1;
+		}
+
+		EquipItem(ActionBar->Inventory[ActionBarIndex]);
+
 	}
 }
+
+void ASurCharacter::Button1(){
+	if (!bEnableInput) return;
+	ActionBarIndex = 0;
+	EquipItem(ActionBar->Inventory[ActionBarIndex]);
+}
+
+void ASurCharacter::Button2(){
+	if (!bEnableInput) return;
+	ActionBarIndex = 1;
+	EquipItem(ActionBar->Inventory[ActionBarIndex]);
+}
+
 
 //  REPLICATION SETTINGS  ####################################################################
 
