@@ -232,7 +232,26 @@ void ASurHUD::DrawInventory(){
 	CheckCursorInButton(ButtonsInventory);
 }
  
+void ASurHUD::DrawPlayerStatus(){
+	ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
+	if (!TheChar) return;
 
+	float Y = (ScreenDivisor / ScreenHWRatio);
+	float SY = ScreenRes.Y / Y;
+	float posX = (0.25f * ScreenRes.X / ScreenDivisor) + (ScreenRes.X / ScreenDivisor);
+	
+	float posY = ((0.03125 * Y) * SY) + (0 * SY);
+	float ex = posY;
+
+	DrawSurText(UIFont, FString::Printf(TEXT("Health_%f"), TheChar->PlayerStatus.Health), posX, posY, FColorBlue, 0.25f);
+	posY += ex;
+	DrawSurText(UIFont, FString::Printf(TEXT("Stamina_%f"), TheChar->PlayerStatus.Stamina), posX, posY, FColorBlue, 0.25f);
+	posY += ex;
+	DrawSurText(UIFont, FString::Printf(TEXT("Hunger_%f"), TheChar->PlayerStatus.Hunger), posX, posY, FColorBlue, 0.25f);
+	posY += ex;
+	DrawSurText(UIFont, FString::Printf(TEXT("Thirst_%f"), TheChar->PlayerStatus.Thirst), posX, posY, FColorBlue, 0.25f);
+
+}
  
 void ASurHUD::DrawToolTip()
 {
@@ -378,6 +397,7 @@ void ASurHUD::DrawHUD(){
 	if (bDrawHUD){
 		DrawCrosshair();
 		DrawActionBar();
+		DrawPlayerStatus();
 	}
 
 	if (bDrawInventory){

@@ -57,6 +57,8 @@
 		<ClInclude Include="..\..\Source\Sur\SurBuildableItem.h" />
 		<ClCompile Include="..\..\Source\Sur\SurCharacter.cpp" />
 		<ClInclude Include="..\..\Source\Sur\SurCharacter.h" />
+		<ClCompile Include="..\..\Source\Sur\SurConsumableItem.cpp" />
+		<ClInclude Include="..\..\Source\Sur\SurConsumableItem.h" />
 		<ClCompile Include="..\..\Source\Sur\SurGameMode.cpp" />
 		<ClInclude Include="..\..\Source\Sur\SurGameMode.h" />
 		<ClCompile Include="..\..\Source\Sur\SurHUD.cpp" />

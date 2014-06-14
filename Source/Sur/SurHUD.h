@@ -172,6 +172,7 @@ public:
 
 	void DrawToolTip();
 
+	void DrawPlayerStatus();
 	
 
 
@@ -254,9 +255,9 @@ public:
 		NewText.Scale.Set(TheScale, TheScale);
 
 		//Outline gets its alpha from the main color
-		NewText.bOutlined = true;
-		NewText.OutlineColor = OutlineColor;
-		NewText.OutlineColor.A = TheColor.A * 2;
+		//NewText.bOutlined = true;
+		//NewText.OutlineColor = OutlineColor;
+		//NewText.OutlineColor.A = TheColor.A * 2;
 
 		//Draw
 		Canvas->DrawItem(NewText);

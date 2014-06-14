@@ -42,8 +42,8 @@ int32 USurInventory::AddItemToInventoryFromItemStack(ASurItem* NewItem){
 
 	// check if inventory is full
 	if (IsFull()){
-		PRINT_SCREEN(TEXT("USurInventory [AddItem] Inventory Full"));
-		return -1;
+		PRINT_SCREEN(TEXT("USurInventory [AddItem] Inventory Full Stack"));
+		return 1;
 	}
 
 	int32 OverflowItems = 0;
@@ -52,7 +52,7 @@ int32 USurInventory::AddItemToInventoryFromItemStack(ASurItem* NewItem){
 		// check if inventory is full
 		if (IsFull()){
 			PRINT_SCREEN(TEXT("NOTICE:  USurInventory [AddItem] Inventory Full Do-While"));
-			return -1;
+			return 1;
 		}
 
 		USurInventorySlot* InventorySlot = FindStackSlotForNewItem(NewItem);
@@ -80,8 +80,8 @@ int32 USurInventory::AddItemToInventoryFromItemOpen(ASurItem* NewItem){
 
 	// check if inventory is full
 	if (IsFull()){
-		PRINT_SCREEN(TEXT("USurInventory [AddItem] Inventory Full"));
-		return -1;
+		PRINT_SCREEN(TEXT("USurInventory [AddItem] Inventory Full Open"));
+		return 1;
 	}
 
 	int32 OverflowItems = 0;
@@ -90,7 +90,7 @@ int32 USurInventory::AddItemToInventoryFromItemOpen(ASurItem* NewItem){
 		// check if inventory is full
 		if (IsFull()){
 			PRINT_SCREEN(TEXT("NOTICE:  USurInventory [AddItem] Inventory Full Do-While"));
-			return -1;
+			return 1;
 		}
 
 		USurInventorySlot* InventorySlot = FindOpenSlotForNewItem(NewItem);

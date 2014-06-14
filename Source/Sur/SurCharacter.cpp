@@ -28,6 +28,10 @@ ASurCharacter::ASurCharacter(const class FPostConstructInitializeProperties& PCI
 
 	// CHARACTER SET UP
 
+	// hunger
+	HungerDecreasePerMinute = 5.0f;
+	bDecreaseHunger = false;
+
 	bIsBuilding = false;
 	BuildingDistanceModifier = 1.0f;
 	BuildingRotationModifier = 0.0f;
@@ -57,18 +61,56 @@ void ASurCharacter::PostInitializeComponents(){
 
 		Inventory->Initialize(32);
 		ActionBar->Initialize(8);
-
+		PRINT_SCREEN("Auth only");
+		bDecreaseHunger = true;
 	}
 
 }
 
 void ASurCharacter::Tick(float DeltaSeconds){
 	Super::Tick(DeltaSeconds);
-	
 	LineTraceForInteraction();
-	BuildingTickHandle();
-	
 
+	BuildingTickHandle();
+
+	DecreaseHungerValue(DeltaSeconds);
+
+}
+
+//  PLAYER STATUS  ###########################################################################
+
+
+void ASurCharacter::EnableHungerDecrease(){
+	bDecreaseHunger = true;
+}
+
+void ASurCharacter::DisableHungerDecreaseForTime(float Minutes){
+	bDecreaseHunger = false;
+	GetWorldTimerManager().SetTimer(this, &ASurCharacter::EnableHungerDecrease, Minutes * 60.0f, false);
+}
+
+void ASurCharacter::DecreaseHungerValue(float DeltaSeconds){
+	if (!bDecreaseHunger) return;
+	PlayerStatus.Hunger = FMath::Clamp(PlayerStatus.Hunger - (DeltaSeconds * (HungerDecreasePerMinute/60.0f)), 0.0f, 100.0f);
+}
+
+
+//  ITEM SPECIFIC INTERACTION  ##################################################################
+
+
+
+void ASurCharacter::HandleConsumableItemData(FConsumableItemData CItemData){
+	PlayerStatus.Health = FMath::Clamp(PlayerStatus.Health + CItemData.Health, 0.0f, 100.0f);
+	PlayerStatus.Stamina = FMath::Clamp(PlayerStatus.Stamina + CItemData.Stamina, 0.0f, 100.0f);
+	PlayerStatus.Hunger = FMath::Clamp(PlayerStatus.Hunger + CItemData.Hunger, 0.0f, 100.0f);
+	PlayerStatus.Thirst = FMath::Clamp(PlayerStatus.Thirst + CItemData.Thirst, 0.0f, 100.0f);
+
+	DisableHungerDecreaseForTime(CItemData.HungerDelay);
+	
+	CurrentlyEquippedInventorySlot->RemoveItemFromSlot(1);
+	if (CurrentlyEquippedInventorySlot->IsSlotEmpty()){
+		EquipItem(CurrentlyEquippedInventorySlot);
+	}
 }
 
 
@@ -89,7 +131,7 @@ void ASurCharacter::LineTraceForInteraction(){
 
 	FHitResult HitOut;
 	HitOut = FHitResult(ForceInit);
-	ECollisionChannel traceCollisionChannel = ECC_GameTraceChannel1;
+	ECollisionChannel traceCollisionChannel = TRACE_CHANNEL_ITEM;
 	FCollisionQueryParams traceParams(FName(TEXT("Interaction Trace")), true, NULL);
 	traceParams.bTraceComplex = true;
 
@@ -178,6 +220,7 @@ void ASurCharacter::PickUpItem(){
 			}
 		}
 		if (!CurrentlyEquippedItem){
+			PRINT_SCREEN("Equipped pickup");
 			EquipItem(ActionBar->Inventory[ActionBarIndex]);
 		}
 	}
@@ -198,7 +241,7 @@ void ASurCharacter::DropEquippedItem(){
 
 	if (!CurrentlyEquippedItem) return;
 
-	if (Role != ROLE_Authority){
+	if (Role < ROLE_Authority){
 		ServerDropEquippedItem();
 		return;
 	}
@@ -260,7 +303,9 @@ void ASurCharacter::ServerAdjustActionBarIndex_Implementation(int32 Adjust){
 	AdjustActionBarIndex(Adjust);
 }
 
+
 //  BUILDING  ##############################################################
+
 
 void ASurCharacter::BuildingTickHandle(){
 	if (!bIsBuilding) return;
@@ -341,9 +386,22 @@ void ASurCharacter::UseItem(){
 		return;
 	}
 
+	if (Role < ROLE_Authority){
+		ServerUseItem();
+	}
+
+	ASurConsumableItem* CItem = NULL;
+
 	switch (CurrentlyEquippedItem->GetItemActionType()){
 	case EItemAction::Build:
 		if (bIsBuilding) return;
+		BuildProcessBegin();
+		break;
+	case EItemAction::Consume:
+		 CItem = Cast<ASurConsumableItem>(CurrentlyEquippedItem);
+		if (!CItem) return;
+		CItem->OnUseItem();
+		HandleConsumableItemData(CItem->ConsumableData);
 		break;
 	default:
 
@@ -351,20 +409,30 @@ void ASurCharacter::UseItem(){
 	}
 
 
-	if (Role < ROLE_Authority){
-		ServerUseItem();
-	}
+	
 
 }
 
 bool ASurCharacter::ServerUseItem_Validate(){
+	switch (CurrentlyEquippedItem->GetItemActionType()){
+	case EItemAction::Build:
+		if (bIsBuilding) return false;
+
+		break;
+	case EItemAction::Consume:
+
+		break;
+	default:
+
+		break;
+	}
 	return true;
 }
 
 void ASurCharacter::ServerUseItem_Implementation(){
 	switch (CurrentlyEquippedItem->GetItemActionType()){
 	case EItemAction::Build:
-		BuildProcessBegin();
+		
 		break;
 	default:
 
@@ -380,7 +448,8 @@ void ASurCharacter::OnRep_CurrentlyEquippedItem(ASurItem* LastEquippedItem){
 
 	if (!CurrentlyEquippedItem) return;
 
-	CurrentlyEquippedItem->OnItemEquipped();
+	CurrentlyEquippedItem->OnItemEquipped();	
+
 	CurrentlyEquippedItem->Mesh->AttachTo(Mesh, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
 	PRINT_SCREEN("ASurCharacter [OnRep_CurrentlyEquippedItem] Client Replicated");
 }
@@ -397,6 +466,7 @@ void ASurCharacter::EquipItem(USurInventorySlot* EquipItemSlot){
 		if (CurrentlyEquippedItem){
 			CurrentlyEquippedItem->OnItemUnEquipped();
 			CurrentlyEquippedItem = NULL;
+			CurrentlyEquippedInventorySlot = NULL;
 		}
 
 		if (!EquipItemSlot || EquipItemSlot->IsSlotEmpty()) return;
@@ -464,6 +534,7 @@ bool ASurCharacter::ServerHandleInventoryUITransaction_Validate(USurInventorySlo
 void ASurCharacter::ServerHandleInventoryUITransaction_Implementation(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot){
 	HandleInventoryUITransaction(FromSlot, ToSlot);
 }
+
 
 //  INPUT  ################################################################################
 
@@ -594,7 +665,6 @@ void ASurCharacter::MWD(){
 	}
 }
 
-
 void ASurCharacter::Button1(){
 	if (!bEnableInput) return;
 	ActionBarIndex = 0;
@@ -627,7 +697,8 @@ void ASurCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 	COND_Custom - This property has no particular condition, but wants the ability to toggle on / off via SetCustomIsActiveOverride
 	*/
 
-	// only to local owner: weapon change requests are locally instigated, other clients don't need it
+	// only to local owner
+	DOREPLIFETIME_CONDITION(ASurCharacter, PlayerStatus, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ASurCharacter, Inventory, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ASurCharacter, ActionBar, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ASurCharacter, ActionBarIndex, COND_OwnerOnly);

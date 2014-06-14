@@ -22,14 +22,6 @@ ASurItem::ASurItem(const class FPostConstructInitializeProperties& PCIP)
 	bReplicateMovement = true;
 	bReplicates = true;
 
-	/*
-
-	static ConstructorHelpers::FObjectFinder<UBlueprint> ItemBlueprint((TCHAR*)&BlueprintPath);
-	if (ItemBlueprint.Object){
-		SurItemBlueprint = (UClass*)ItemBlueprint.Object->GeneratedClass;
-	}
-	*/
-
 }
 
 

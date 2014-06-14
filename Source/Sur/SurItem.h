@@ -11,6 +11,7 @@ namespace EItemAction{
 	enum Type{
 		Null,
 		Build,
+		Consume,
 		Fire,
 		Swing
 	};
@@ -23,7 +24,7 @@ class ASurItem : public AActor
 {
 	GENERATED_UCLASS_BODY()
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Mesh)
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = AAMesh)
 	TSubobjectPtr<class UStaticMeshComponent> Mesh;
 
 
@@ -32,24 +33,24 @@ class ASurItem : public AActor
 
 
 public:
-	UPROPERTY(EditDefaultsOnly, Category = Blueprint)
+	UPROPERTY(EditDefaultsOnly, Category = AABlueprint)
 	TSubclassOf<class ASurItem> SurItemBlueprint;
 
 	//  CONFIGURATION  ##################################################################
 
-	UPROPERTY(EditDefaultsOnly, Category = Configuration)
+	UPROPERTY(EditDefaultsOnly, Category = AAConfiguration)
 		FName UIName;
 
-	UPROPERTY(EditDefaultsOnly, Category = Configuration)
+	UPROPERTY(EditDefaultsOnly, Category = AAConfiguration)
 		UTexture2D* UITexture;
 
-	UPROPERTY(EditDefaultsOnly, Category = Configuration)
+	UPROPERTY(EditDefaultsOnly, Category = AAConfiguration)
 		int32 CurrentItemCount;
 
-	UPROPERTY(EditDefaultsOnly, Category = Configuration)
+	UPROPERTY(EditDefaultsOnly, Category = AAConfiguration)
 		int32 MaxStackable;
 
-	UPROPERTY(EditDefaultsOnly, Category = Configuration)
+	UPROPERTY(EditDefaultsOnly, Category = AAConfiguration)
 		TEnumAsByte<EItemAction::Type> ItemActionType;
 
 

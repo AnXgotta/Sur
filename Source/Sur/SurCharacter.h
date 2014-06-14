@@ -3,41 +3,15 @@
 #pragma once
 
 
-
+#include "SurTypes.h"
 #include "SurItem.h"
+#include "SurConsumableItem.h"
 #include "SurInventory.h"
 #include "SurInventorySlot.h"
 #include "GameFramework/Character.h"
 #include "SurCharacter.generated.h"
 
-USTRUCT()
-struct FSSPlayerHealthStatus{
-	GENERATED_USTRUCT_BODY()
 
-	// player health
-	UPROPERTY()
-	float Health;
-
-	// player stamina
-	UPROPERTY()
-		float Stamina;
-
-	// player hunger
-	UPROPERTY()
-		float Hunger;
-
-	// player thirst
-	UPROPERTY()
-		float Thirst;
-
-	// Default Values
-	FSSPlayerHealthStatus(){
-		Health = 100.0f;
-		Stamina = 100.0f;
-		Hunger = 100.0f;
-		Thirst = 100.0f;
-	}
-};
 
 UCLASS()
 class ASurCharacter : public ACharacter
@@ -69,7 +43,7 @@ class ASurCharacter : public ACharacter
 
 	// PLAYER STATUS ##############################################################################
 
-	UPROPERTY()
+	UPROPERTY(Transient, Replicated)
 		FSSPlayerHealthStatus PlayerStatus;
 
 	// keep tabs on currently selected item (IN BLUEPRINT)
@@ -79,7 +53,6 @@ class ASurCharacter : public ACharacter
 	//  HEALTH  #####################################################################################
 
 	// add to health
-
 
 	// remove from health
 
@@ -91,11 +64,20 @@ class ASurCharacter : public ACharacter
 
 	//  HUNGER  #####################################################################################
 
-	// add to hunger
+	UPROPERTY()
+		bool bDecreaseHunger;
 
+	UPROPERTY()
+		float HungerDecreasePerMinute;
 
-	// remove from hunger
+	UFUNCTION()
+		void EnableHungerDecrease();
 
+	UFUNCTION()
+		void DisableHungerDecreaseForTime(float Minutes);
+
+	UFUNCTION()
+		void DecreaseHungerValue(float DeltaSeconds);
 
 
 	// THIRST  ######################################################################################
@@ -106,6 +88,12 @@ class ASurCharacter : public ACharacter
 	// remove from thirst
 
 
+
+	//  ITEM SPECIFIC INTERATION  ##################################################################
+
+	
+	UFUNCTION()
+		void HandleConsumableItemData(FConsumableItemData CItemData);
 
 
 	// LINE TRACE FOR INTERACTION  #################################################################
@@ -119,7 +107,7 @@ class ASurCharacter : public ACharacter
 		void HandleLineTraceForInteractionHit(FHitResult& Hit);
 
 	// [server]  line trace for object, call HandleLineTraceForInteractionHit
-	UFUNCTION(reliable, server, WithValidation)
+	UFUNCTION(Server, Reliable, WithValidation)
 		void ServerHandleLineTraceForInteractionHit();
 
 	//  INVENTORY  ##################################################################################

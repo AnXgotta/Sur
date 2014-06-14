@@ -7,6 +7,9 @@
 ASurBuildableItem::ASurBuildableItem(const class FPostConstructInitializeProperties& PCIP)
 	: Super(PCIP)
 {
+
+	ItemActionType = EItemAction::Build;
+
 	Mesh->BodyInstance.SetObjectType(ECC_WorldStatic);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	//Mesh->BodyInstance.SetResponseToAllChannels(ECR_);
