@@ -243,16 +243,27 @@ void ASurHUD::DrawPlayerStatus(){
 	float posY = ((0.03125 * Y) * SY) + (0 * SY);
 	float ex = posY;
 
-	DrawSurText(UIFont, FString::Printf(TEXT("Health_%f"), TheChar->PlayerStatus.Health), posX, posY, FColorBlue, 0.25f);
+	DrawSurText(UIFont, FString::Printf(TEXT("Health_%.2f"), TheChar->PlayerStatus.Health), posX, posY, FColorBlue, 0.5f);
 	posY += ex;
-	DrawSurText(UIFont, FString::Printf(TEXT("Stamina_%f"), TheChar->PlayerStatus.Stamina), posX, posY, FColorBlue, 0.25f);
+	DrawSurText(UIFont, FString::Printf(TEXT("Stamina_%.2f"), TheChar->PlayerStatus.Stamina), posX, posY, FColorBlue, 0.5f);
 	posY += ex;
-	DrawSurText(UIFont, FString::Printf(TEXT("Hunger_%f"), TheChar->PlayerStatus.Hunger), posX, posY, FColorBlue, 0.25f);
+	DrawSurText(UIFont, FString::Printf(TEXT("Hunger_%.2f"), TheChar->PlayerStatus.Hunger), posX, posY, FColorBlue, 0.5f);
 	posY += ex;
-	DrawSurText(UIFont, FString::Printf(TEXT("Thirst_%f"), TheChar->PlayerStatus.Thirst), posX, posY, FColorBlue, 0.25f);
+	DrawSurText(UIFont, FString::Printf(TEXT("Thirst_%.2f"), TheChar->PlayerStatus.Thirst), posX, posY, FColorBlue, 0.5f);
 
 }
  
+void ASurHUD::DrawCurrentlyTracedItem(){
+	ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
+	if (!TheChar) return;
+	if (!TheChar->CurrentlyTracedItem) return;
+
+	FVector UIPos = Project(TheChar->CurrentlyTracedItem->GetActorLocation());
+	DrawSurText(UIFont, TheChar->CurrentlyTracedItem->UIName.ToString(), UIPos.X, UIPos.Y, FColorYellow, 0.4f);
+
+
+}
+
 void ASurHUD::DrawToolTip()
 {
 	//if mouse is too far to right, draw from left instead
@@ -396,8 +407,9 @@ void ASurHUD::DrawHUD(){
 	//Draw HUD?
 	if (bDrawHUD){
 		DrawCrosshair();
+		DrawCurrentlyTracedItem();
 		DrawActionBar();
-		DrawPlayerStatus();
+		DrawPlayerStatus();		
 	}
 
 	if (bDrawInventory){

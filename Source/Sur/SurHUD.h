@@ -174,6 +174,7 @@ public:
 
 	void DrawPlayerStatus();
 	
+	void DrawCurrentlyTracedItem(); 
 
 
 

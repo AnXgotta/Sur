@@ -19,8 +19,8 @@ class ASurCharacter : public ACharacter
 	GENERATED_UCLASS_BODY()
 
 	/** First person camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-		TSubobjectPtr<class UCameraComponent> FirstPersonCameraComponent;
+//	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+//		TSubobjectPtr<class UCameraComponent> FirstPersonCameraComponent;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
@@ -82,10 +82,20 @@ class ASurCharacter : public ACharacter
 
 	// THIRST  ######################################################################################
 
-	// add to thirst
+	UPROPERTY()
+		bool bDecreaseThirst;
 
+	UPROPERTY()
+		float ThirstDecreasePerMinute;
 
-	// remove from thirst
+	UFUNCTION()
+		void EnableThirstDecrease();
+
+	UFUNCTION()
+		void DisableThirstDecreaseForTime(float Minutes);
+
+	UFUNCTION()
+		void DecreaseThirstValue(float DeltaSeconds);
 
 
 

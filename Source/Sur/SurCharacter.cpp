@@ -16,21 +16,23 @@ ASurCharacter::ASurCharacter(const class FPostConstructInitializeProperties& PCI
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 
-	// Create a CameraComponent	
-	FirstPersonCameraComponent = PCIP.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
-	FirstPersonCameraComponent->AttachParent = CapsuleComponent;
-	FirstPersonCameraComponent->RelativeLocation = FVector(0, 0, 64.f); // Position the camera
-
-
-	Mesh->AttachParent = FirstPersonCameraComponent;
+//	Mesh->AttachParent = RootComponent;
 	Mesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
 	Mesh->PrimaryComponentTick.TickGroup = TG_PrePhysics;
 
+	/*// Create a CameraComponent	
+	FirstPersonCameraComponent = PCIP.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
+	FirstPersonCameraComponent->AttachParent = Mesh;
+	FirstPersonCameraComponent->RelativeLocation = FVector(0, 0, 64.f); // Position the camera
+	*/
 	// CHARACTER SET UP
 
 	// hunger
-	HungerDecreasePerMinute = 5.0f;
+	HungerDecreasePerMinute = 50.0f;
 	bDecreaseHunger = false;
+	// thirst
+	ThirstDecreasePerMinute = 50.0f;
+	bDecreaseThirst = false;
 
 	bIsBuilding = false;
 	BuildingDistanceModifier = 1.0f;
@@ -61,8 +63,8 @@ void ASurCharacter::PostInitializeComponents(){
 
 		Inventory->Initialize(32);
 		ActionBar->Initialize(8);
-		PRINT_SCREEN("Auth only");
 		bDecreaseHunger = true;
+		bDecreaseThirst = true;
 	}
 
 }
@@ -74,11 +76,14 @@ void ASurCharacter::Tick(float DeltaSeconds){
 	BuildingTickHandle();
 
 	DecreaseHungerValue(DeltaSeconds);
-
+	DecreaseThirstValue(DeltaSeconds);
 }
+
+
 
 //  PLAYER STATUS  ###########################################################################
 
+// Hunger
 
 void ASurCharacter::EnableHungerDecrease(){
 	bDecreaseHunger = true;
@@ -94,6 +99,24 @@ void ASurCharacter::DecreaseHungerValue(float DeltaSeconds){
 	PlayerStatus.Hunger = FMath::Clamp(PlayerStatus.Hunger - (DeltaSeconds * (HungerDecreasePerMinute/60.0f)), 0.0f, 100.0f);
 }
 
+// Thirst
+
+void ASurCharacter::EnableThirstDecrease(){
+	bDecreaseThirst = true;
+}
+
+void ASurCharacter::DisableThirstDecreaseForTime(float Minutes){
+	bDecreaseThirst = false;
+	GetWorldTimerManager().SetTimer(this, &ASurCharacter::EnableThirstDecrease, Minutes * 60.0f, false);
+}
+
+void ASurCharacter::DecreaseThirstValue(float DeltaSeconds){
+	if (!bDecreaseThirst) return;
+	PlayerStatus.Thirst = FMath::Clamp(PlayerStatus.Thirst - (DeltaSeconds * (ThirstDecreasePerMinute / 60.0f)), 0.0f, 100.0f);
+}
+
+
+
 
 //  ITEM SPECIFIC INTERACTION  ##################################################################
 
@@ -105,8 +128,15 @@ void ASurCharacter::HandleConsumableItemData(FConsumableItemData CItemData){
 	PlayerStatus.Hunger = FMath::Clamp(PlayerStatus.Hunger + CItemData.Hunger, 0.0f, 100.0f);
 	PlayerStatus.Thirst = FMath::Clamp(PlayerStatus.Thirst + CItemData.Thirst, 0.0f, 100.0f);
 
-	DisableHungerDecreaseForTime(CItemData.HungerDelay);
-	
+	if (CItemData.HungerDelay > 0.0f){
+		DisableHungerDecreaseForTime(CItemData.HungerDelay);
+	}
+
+	if (CItemData.ThirstDelay > 0.0f){
+		DisableThirstDecreaseForTime(CItemData.ThirstDelay);
+	}
+
+
 	CurrentlyEquippedInventorySlot->RemoveItemFromSlot(1);
 	if (CurrentlyEquippedInventorySlot->IsSlotEmpty()){
 		EquipItem(CurrentlyEquippedInventorySlot);
@@ -382,12 +412,12 @@ void ASurCharacter::ServerBuildProcessEnd_Implementation(bool Cancelled){
 
 void ASurCharacter::UseItem(){
 	if (!CurrentlyEquippedItem){
-		PRINT_SCREEN("ASurCharacter [UseItem] CurrentlyEquippedItem is NULL");
 		return;
 	}
 
 	if (Role < ROLE_Authority){
 		ServerUseItem();
+		return;
 	}
 
 	ASurConsumableItem* CItem = NULL;
@@ -400,8 +430,9 @@ void ASurCharacter::UseItem(){
 	case EItemAction::Consume:
 		 CItem = Cast<ASurConsumableItem>(CurrentlyEquippedItem);
 		if (!CItem) return;
-		CItem->OnUseItem();
 		HandleConsumableItemData(CItem->ConsumableData);
+		CItem->OnUseItem();
+		
 		break;
 	default:
 
@@ -420,7 +451,7 @@ bool ASurCharacter::ServerUseItem_Validate(){
 
 		break;
 	case EItemAction::Consume:
-
+		
 		break;
 	default:
 
@@ -430,14 +461,7 @@ bool ASurCharacter::ServerUseItem_Validate(){
 }
 
 void ASurCharacter::ServerUseItem_Implementation(){
-	switch (CurrentlyEquippedItem->GetItemActionType()){
-	case EItemAction::Build:
-		
-		break;
-	default:
-
-		break;
-	}
+	UseItem();
 }
 
 void ASurCharacter::OnRep_CurrentlyEquippedItem(ASurItem* LastEquippedItem){
@@ -708,6 +732,7 @@ void ASurCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 	DOREPLIFETIME_CONDITION(ASurCharacter, CurrentlyEquippedInventorySlot, COND_OwnerOnly);
 
 	DOREPLIFETIME_CONDITION(ASurCharacter, bIsBuilding, COND_OwnerOnly);
+
 }
 
 
