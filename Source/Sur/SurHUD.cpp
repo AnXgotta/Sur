@@ -48,8 +48,6 @@ ASurHUD::ASurHUD(const class FPostConstructInitializeProperties& PCIP)
 	//Scale
 	GlobalHUDMult = 1;
 	DefaultFontScale = 0.7;   //scaling down a size 36 font
-	ScreenHWRatio = 1.0f;
-	ScreenDivisor = 16.0f;
 	ScreenRes = FVector2D(0.0f, 0.0f);
 }
 
@@ -155,20 +153,23 @@ void ASurHUD::DrawActionBar(){
 	if (!TheChar) return;
 	USurInventory* ActionBar = TheChar->ActionBar;
 	if (!ActionBar) return;
-
-	float Y = (ScreenDivisor / ScreenHWRatio);
-	float SY = ScreenRes.Y / Y;
-
+	
+	float TextureSize = 0.0625f * ScreenRes.X;
 	for (int i = 0; i < ActionBar->Inventory.Num(); i++){
 		FSurButtonStruct NewSlot;
 		NewSlot.type = BUTTONTYPE_ACTIONBAR_SLOT;
-		NewSlot.minX = ( 4.0f * ScreenRes.X / ScreenDivisor) + ((float)i * ScreenRes.X / ScreenDivisor);
-		NewSlot.maxX = (NewSlot.minX + (ScreenRes.X / ScreenDivisor));
-		NewSlot.minY = ((0.875 * Y ) * SY);
-		NewSlot.maxY = (NewSlot.minY + SY);
+		NewSlot.minX = (0.25f * ScreenRes.X) + (i * TextureSize);
+		NewSlot.maxX = NewSlot.minX + TextureSize;
+		NewSlot.minY = 0.85f * ScreenRes.Y;
+		NewSlot.maxY = NewSlot.minY + TextureSize;
 		NewSlot.index = i;
 
-		VDrawTile(InventorySlotBackground, NewSlot.minX, NewSlot.minY, NewSlot.maxX - NewSlot.minX, NewSlot.maxY - NewSlot.minY, FColorBlack);
+
+		if (i == TheChar->ActionBarIndex){
+			VDrawTile(ActiveInventorySlotBackground, NewSlot.minX, NewSlot.minY, NewSlot.maxX - NewSlot.minX, NewSlot.maxY - NewSlot.minY, FColorBlack);
+		}else{
+			VDrawTile(InventorySlotBackground, NewSlot.minX, NewSlot.minY, NewSlot.maxX - NewSlot.minX, NewSlot.maxY - NewSlot.minY, FColorBlack);
+		}
 
 		if (!ActionBar->Inventory[i]->IsSlotEmpty()){
 			VDrawTile(ActionBar->Inventory[i]->GetItemDisplayTexture(), NewSlot.minX, NewSlot.minY, NewSlot.maxX - NewSlot.minX, NewSlot.maxY - NewSlot.minY, FColorRed);
@@ -176,9 +177,7 @@ void ASurHUD::DrawActionBar(){
 			NewSlot.toolTip = ActionBar->Inventory[i]->GetItemName().ToString();
 		}
 
-		if (i == TheChar->ActionBarIndex){
-			DrawSurText(UIFont, "E", NewSlot.minX + ((NewSlot.maxX - NewSlot.minX) / 2.0f), NewSlot.minY + ((NewSlot.maxY - NewSlot.minY) / 2.0f), FColorRed, 0.5f);
-		}
+		
 
 		ButtonsActionBar.Add(NewSlot);
 	}
@@ -193,27 +192,19 @@ void ASurHUD::DrawInventory(){
 	USurInventory* Inventory = TheChar->Inventory;
 	if (!Inventory) return;
 
-	
-
-	float posX = 0.0f;
-	float posY = 0.0f;
-
 	int slotIndex = 0;
 
-	float Y = (ScreenDivisor / ScreenHWRatio);
-	float SY = ScreenRes.Y / Y;
-
+	float TextureSize = 0.0625f * ScreenRes.X;
+	
 	for (int i = 0; i < Inventory->Inventory.Num() / 8; i++){
 		for (int j = 0; j < Inventory->Inventory.Num() / 4; j++){
 			FSurButtonStruct NewSlot;
 			NewSlot.type = BUTTONTYPE_INVENTORY_SLOT;
-			NewSlot.minX = (4.0f * ScreenRes.X / ScreenDivisor) + ((float)j * ScreenRes.X / ScreenDivisor);
-			NewSlot.maxX = (NewSlot.minX + (ScreenRes.X / ScreenDivisor));
-			NewSlot.minY = ((0.125 * Y) * SY) + (i * SY);
-			NewSlot.maxY = (NewSlot.minY + SY);
+			NewSlot.minX = (0.250f * ScreenRes.X) + (j * TextureSize);
+			NewSlot.maxX = NewSlot.minX + TextureSize;
+			NewSlot.minY = (0.20f * ScreenRes.Y) + (i * TextureSize);
+			NewSlot.maxY = NewSlot.minY + TextureSize;
 			NewSlot.index = slotIndex;
-
-			posX += 1.0f;
 
 			VDrawTile(InventorySlotBackground, NewSlot.minX, NewSlot.minY, NewSlot.maxX - NewSlot.minX, NewSlot.maxY - NewSlot.minY, FColorBlack);
 
@@ -224,7 +215,7 @@ void ASurHUD::DrawInventory(){
 			}
 
 			ButtonsInventory.Add(NewSlot);
-			++slotIndex;
+			slotIndex++;
 		}
 		
 	}
@@ -236,11 +227,8 @@ void ASurHUD::DrawPlayerStatus(){
 	ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
 	if (!TheChar) return;
 
-	float Y = (ScreenDivisor / ScreenHWRatio);
-	float SY = ScreenRes.Y / Y;
-	float posX = (0.25f * ScreenRes.X / ScreenDivisor) + (ScreenRes.X / ScreenDivisor);
-	
-	float posY = ((0.03125 * Y) * SY) + (0 * SY);
+	float posX = 0.1f * ScreenRes.X;	
+	float posY = 0.05f * ScreenRes.Y;
 	float ex = posY;
 
 	DrawSurText(UIFont, FString::Printf(TEXT("Health_%.2f"), TheChar->PlayerStatus.Health), posX, posY, FColorBlue, 0.5f);
@@ -320,28 +308,18 @@ void ASurHUD::DrawCursor(){
 	//cursor tex found?
 	if(!CursorMain) return;
 
-	float Y = (ScreenDivisor / ScreenHWRatio);
-	float SY = ScreenRes.Y / Y;
-	float CursorHeight = ((0.05 * Y) * SY);
-	float CursorWidth = (0.5f * ScreenRes.X / ScreenDivisor);
-
-	if (bIsDraggingButton && CurInventorySlot){
-		float TextureHeight = ((0.1 * Y) * SY);
-		float TextureWidth = (1.0f * ScreenRes.X / ScreenDivisor);
-		VDrawTile(CurInventorySlot->ItemDisplayTexture, MouseLocation.X - (0.5f * TextureWidth), MouseLocation.Y - (0.5f * TextureHeight), TextureWidth, TextureHeight, FColorBlack);
-	}
-
-	
-	VDrawTile(CursorMain, MouseLocation.X - (0.5f * CursorWidth), MouseLocation.Y - (0.5f * CursorHeight), CursorWidth, CursorHeight, FColorBlack);
+	float CursorDim = 0.025f * ScreenRes.X;
+	if (bIsDraggingButton && CurInventorySlot){	
+		float TextureDim = 0.0625f * ScreenRes.X;
+		VDrawTile(CurInventorySlot->ItemDisplayTexture, MouseLocation.X - (0.5f * TextureDim), MouseLocation.Y - (0.5f * TextureDim), TextureDim, TextureDim, FColorBlack);
+	}	
+	VDrawTile(CursorMain, MouseLocation.X - (0.5f * CursorDim), MouseLocation.Y - (0.5f * CursorDim), CursorDim, CursorDim, FColorBlack);
 	
 }
  
-void ASurHUD::DrawCrosshair(){
-	float Y = (ScreenDivisor / ScreenHWRatio);
-	float SY = ScreenRes.Y / Y;
-	float CursorHeight = ((0.05 * Y) * SY);
-	float CursorWidth = (0.5f * ScreenRes.X / ScreenDivisor);
-	VDrawTile(CursorMain, (ScreenRes.X/2.0f) - (0.5f * CursorWidth), (ScreenRes.Y/2.0f) - (0.5f * CursorHeight), CursorWidth, CursorHeight, FColorBlack);
+void ASurHUD::DrawCrosshair(){	
+	float TextureDim = 0.025f * ScreenRes.X;
+	VDrawTile(CursorMain, (ScreenRes.X / 2.0f) - (0.5f * TextureDim), (ScreenRes.Y / 2.0f) - (0.5f * TextureDim), TextureDim, TextureDim, FColorBlack);
 }
 
 void ASurHUD::PlayerInputChecks(){
@@ -373,7 +351,6 @@ void ASurHUD::ResetStateInfo(){
 void ASurHUD::SetScreenResolution(float ScreenX, float ScreenY){
 	ScreenRes.X = ScreenX;
 	ScreenRes.Y = ScreenY;
-	ScreenHWRatio = ScreenRes.X / ScreenRes.Y;
 }
 
 void ASurHUD::DrawHUD(){

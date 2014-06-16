@@ -83,8 +83,6 @@ class ASurHUD : public AHUD
 public:
 
 	FVector2D ScreenRes;
-	float ScreenDivisor;
-	float ScreenHWRatio;
 
 
 	UFUNCTION(BlueprintCallable, Category = ScreenResolution)
@@ -104,6 +102,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = T2D)
 		UTexture2D* InventorySlotBackground;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = T2D)
+		UTexture2D* ActiveInventorySlotBackground;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = T2D)
