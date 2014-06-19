@@ -340,8 +340,8 @@ void ASurCharacter::ServerAdjustActionBarIndex_Implementation(int32 Adjust){
 void ASurCharacter::BuildingTickHandle(){
 	if (!bIsBuilding) return;
 
-	FVector CurrentBuildPosition = CapsuleComponent->GetComponentLocation() + CapsuleComponent->GetForwardVector() * (300.0f * BuildingDistanceModifier);
-	FRotator CurrentBuildRotation = Mesh->GetSocketRotation(RIGHT_HAND_SOCKET) + FRotator(0.0f, BuildingRotationModifier, 0.0f);
+	FVector CurrentBuildPosition = CapsuleComponent->GetComponentLocation() + (CapsuleComponent->GetForwardVector() * (300.0f * BuildingDistanceModifier));
+	FRotator CurrentBuildRotation = FRotator(0.0f, CapsuleComponent->GetComponentRotation().Yaw, 0.0f);//Mesh->GetSocketRotation(RIGHT_HAND_SOCKET) + FRotator(0.0f, BuildingRotationModifier, 0.0f);
 
 
 
@@ -361,23 +361,21 @@ void ASurCharacter::BuildingTickHandle(){
 	traceParams.AddIgnoredActor(CurrentlyEquippedItem);
 	traceParams.AddIgnoredActor(this);
 
+	DrawDebugLine(GetWorld(), CurrentlyEquippedItem->GetActorLocation(), CurrentlyEquippedItem->GetActorLocation() + CurrentlyEquippedItem->GetActorUpVector() * 300.0f, FColor::Red);
 
-
+	PRINT_SCREEN(CapsuleComponent->GetComponentRotation().ToString());
 	if (GetWorld()->LineTraceSingle(HitOut, StartPoint, EndPoint, traceCollisionChannel, traceParams)){
-		//CurrentlyEquippedItem->SetActorHiddenInGame(true);
-		CurrentBuildPosition = HitOut.Location + FVector(0.0f, 0.0f, CurrentlyEquippedItem->Mesh->Bounds.BoxExtent.Z);
-		CurrentlyEquippedItem->SetActorRotation(HitOut.Normal.Rotation());
-	}
-	else{
-		//CurrentlyEquippedItem->SetActorHiddenInGame(false);
-	}
-
-
-
-	
+		
+		CurrentBuildPosition = HitOut.Location;
+		CurrentBuildRotation = HitOut.Normal.Rotation() + FRotator(-90.0f, 0.0f, 0.0f);
+		
+	}	
 
 	CurrentlyEquippedItem->SetActorLocation(CurrentBuildPosition);
 	CurrentlyEquippedItem->SetActorRotation(CurrentBuildRotation);
+	
+	CurrentlyEquippedItem->AddActorLocalRotation(FRotator(0.0f, BuildingRotationModifier + CapsuleComponent->GetComponentRotation().Yaw, 0.0f));
+	PRINT_SCREEN(CurrentlyEquippedItem->GetActorRotation().ToString());
 
 }
 
@@ -390,11 +388,10 @@ void ASurCharacter::BuildProcessBegin(){
 
 void ASurCharacter::BuildProcessEnd(bool Cancelled){
 	bIsBuilding = false;
-
 	if (Cancelled){
 
 	}else{
-
+		
 	}
 }
 
@@ -424,8 +421,13 @@ void ASurCharacter::UseItem(){
 
 	switch (CurrentlyEquippedItem->GetItemActionType()){
 	case EItemAction::Build:
-		if (bIsBuilding) return;
-		BuildProcessBegin();
+		if (!bIsBuilding){
+			BuildProcessBegin();
+		}
+		else{
+			BuildProcessEnd(false);
+		}
+		
 		break;
 	case EItemAction::Consume:
 		 CItem = Cast<ASurConsumableItem>(CurrentlyEquippedItem);
@@ -447,7 +449,6 @@ void ASurCharacter::UseItem(){
 bool ASurCharacter::ServerUseItem_Validate(){
 	switch (CurrentlyEquippedItem->GetItemActionType()){
 	case EItemAction::Build:
-		if (bIsBuilding) return false;
 
 		break;
 	case EItemAction::Consume:

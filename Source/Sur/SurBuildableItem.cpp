@@ -12,8 +12,7 @@ ASurBuildableItem::ASurBuildableItem(const class FPostConstructInitializePropert
 
 	Mesh->BodyInstance.SetObjectType(ECC_WorldStatic);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	//Mesh->BodyInstance.SetResponseToAllChannels(ECR_);
-
+	Mesh->SetSimulatePhysics(false);
 	Mesh->bGenerateOverlapEvents = true;
 }
 
