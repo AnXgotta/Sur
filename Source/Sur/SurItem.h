@@ -54,6 +54,13 @@ public:
 		TEnumAsByte<EItemAction::Type> ItemActionType;
 
 
+	//  TRACING  ##############################################################
+
+	UPROPERTY()
+		bool bShowNameOnTrace;
+
+
+
 	//  HELPERS  #############################################################################
 
 	UFUNCTION()

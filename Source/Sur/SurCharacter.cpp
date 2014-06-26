@@ -35,6 +35,8 @@ ASurCharacter::ASurCharacter(const class FPostConstructInitializeProperties& PCI
 	bDecreaseThirst = false;
 
 	bIsBuilding = false;
+	bIsQHeld = false;
+	bIsEHeld = false;
 	BuildingDistanceModifier = 1.0f;
 	BuildingRotationModifier = 0.0f;
 
@@ -73,7 +75,7 @@ void ASurCharacter::Tick(float DeltaSeconds){
 	Super::Tick(DeltaSeconds);
 	LineTraceForInteraction();
 
-	BuildingTickHandle();
+	BuildingTickHandle(DeltaSeconds);
 
 	DecreaseHungerValue(DeltaSeconds);
 	DecreaseThirstValue(DeltaSeconds);
@@ -337,13 +339,11 @@ void ASurCharacter::ServerAdjustActionBarIndex_Implementation(int32 Adjust){
 //  BUILDING  ##############################################################
 
 
-void ASurCharacter::BuildingTickHandle(){
+void ASurCharacter::BuildingTickHandle(float DeltaSeconds){
 	if (!bIsBuilding) return;
 
 	FVector CurrentBuildPosition = CapsuleComponent->GetComponentLocation() + (CapsuleComponent->GetForwardVector() * (300.0f * BuildingDistanceModifier));
-	FRotator CurrentBuildRotation = FRotator(0.0f, CapsuleComponent->GetComponentRotation().Yaw, 0.0f);//Mesh->GetSocketRotation(RIGHT_HAND_SOCKET) + FRotator(0.0f, BuildingRotationModifier, 0.0f);
-
-
+	FRotator CurrentBuildRotation = FRotator::ZeroRotator;
 
 	FVector CameraLocation;
 	FRotator CameraRotation;
@@ -351,7 +351,6 @@ void ASurCharacter::BuildingTickHandle(){
 
 	const FVector StartPoint = CameraLocation;
 	const FVector EndPoint = CameraLocation + (CameraRotation.Vector() * 800.0f);
-
 
 	FHitResult HitOut;
 	HitOut = FHitResult(ForceInit);
@@ -363,35 +362,71 @@ void ASurCharacter::BuildingTickHandle(){
 
 	DrawDebugLine(GetWorld(), CurrentlyEquippedItem->GetActorLocation(), CurrentlyEquippedItem->GetActorLocation() + CurrentlyEquippedItem->GetActorUpVector() * 300.0f, FColor::Red);
 
-	PRINT_SCREEN(CapsuleComponent->GetComponentRotation().ToString());
 	if (GetWorld()->LineTraceSingle(HitOut, StartPoint, EndPoint, traceCollisionChannel, traceParams)){
-		
 		CurrentBuildPosition = HitOut.Location;
-		CurrentBuildRotation = HitOut.Normal.Rotation() + FRotator(-90.0f, 0.0f, 0.0f);
-		
+		CurrentBuildRotation = HitOut.Normal.Rotation() + FRotator(-90.0f, 0.0f, 0.0f);	
 	}	
 
 	CurrentlyEquippedItem->SetActorLocation(CurrentBuildPosition);
 	CurrentlyEquippedItem->SetActorRotation(CurrentBuildRotation);
+
+	if (bIsQHeld){
+		BuildingRotationModifier = BuildingRotationModifier + 30.0f * DeltaSeconds;//FMath::Min(BuildingRotationModifier + 5.0f * DeltaSeconds, 180.0f);
+	}
+
+	if (bIsEHeld){
+		BuildingRotationModifier = BuildingRotationModifier - 30.0f * DeltaSeconds;// FMath::Max(BuildingRotationModifier - 5.0f * DeltaSeconds, -180.0f);
+	}
 	
 	CurrentlyEquippedItem->AddActorLocalRotation(FRotator(0.0f, BuildingRotationModifier + CapsuleComponent->GetComponentRotation().Yaw, 0.0f));
-	PRINT_SCREEN(CurrentlyEquippedItem->GetActorRotation().ToString());
 
 }
 
 // [server]
 void ASurCharacter::BuildProcessBegin(){
 	bIsBuilding = true;
-
+	ASurBuildableItem* CurBuildable = Cast<ASurBuildableItem>(CurrentlyEquippedItem);
+	if (!CurBuildable){
+		// should never happen
+		PRINT_SCREEN("ASurCharacter [BuildProcessBegin] ShouldNeverHappen");
+		return;
+	}
+	CurBuildable->OnBeginBuilding();
 }
 
 
 void ASurCharacter::BuildProcessEnd(bool Cancelled){
 	bIsBuilding = false;
-	if (Cancelled){
+	ASurBuildableItem* CurBuildable = Cast<ASurBuildableItem>(CurrentlyEquippedItem);
+	if (!CurBuildable){
+		// should never happen
+		PRINT_SCREEN("ASurCharacter [BuildProcessEnd] ShouldNeverHappen");
+		return;
+	}
 
-	}else{
-		
+	CurBuildable->OnEndBuilding(Cancelled);
+
+	if (Cancelled){
+		CurrentlyEquippedItem->SetActorLocationAndRotation(Mesh->GetSocketLocation(RIGHT_HAND_SOCKET), Mesh->GetSocketRotation(RIGHT_HAND_SOCKET));
+		PRINT_SCREEN("ASurCharacter [BuildProcessEnd] Cancelled");
+	}
+	else{
+		const FVector SpawnPoint = CurrentlyEquippedItem->GetActorLocation();
+
+		UWorld* const World = GetWorld();
+		if (World){
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Instigator = this;
+			ASurItem* DroppedItem = World->SpawnActor<ASurItem>(CurrentlyEquippedItem->SurItemBlueprint, CurrentlyEquippedItem->GetActorLocation(), CurrentlyEquippedItem->GetActorRotation(), SpawnParams);
+			if (DroppedItem){
+				CurrentlyEquippedInventorySlot->RemoveItemFromSlot(1);
+				if (CurrentlyEquippedInventorySlot->IsSlotEmpty()){
+					CurrentlyEquippedInventorySlot = NULL;
+					CurrentlyEquippedItem->OnItemUnEquipped();
+					CurrentlyEquippedItem = NULL;
+				}
+			}
+		}
 	}
 }
 
@@ -407,13 +442,13 @@ void ASurCharacter::ServerBuildProcessEnd_Implementation(bool Cancelled){
 //  INTERACTION  ###########################################################
 
 
-void ASurCharacter::UseItem(){
+void ASurCharacter::UseItem(bool bVoid){
 	if (!CurrentlyEquippedItem){
 		return;
 	}
 
 	if (Role < ROLE_Authority){
-		ServerUseItem();
+		ServerUseItem(bVoid);
 		return;
 	}
 
@@ -423,9 +458,8 @@ void ASurCharacter::UseItem(){
 	case EItemAction::Build:
 		if (!bIsBuilding){
 			BuildProcessBegin();
-		}
-		else{
-			BuildProcessEnd(false);
+		}else{
+			BuildProcessEnd(bVoid);
 		}
 		
 		break;
@@ -446,7 +480,7 @@ void ASurCharacter::UseItem(){
 
 }
 
-bool ASurCharacter::ServerUseItem_Validate(){
+bool ASurCharacter::ServerUseItem_Validate(bool bVoid){
 	switch (CurrentlyEquippedItem->GetItemActionType()){
 	case EItemAction::Build:
 
@@ -461,8 +495,8 @@ bool ASurCharacter::ServerUseItem_Validate(){
 	return true;
 }
 
-void ASurCharacter::ServerUseItem_Implementation(){
-	UseItem();
+void ASurCharacter::ServerUseItem_Implementation(bool bVoid){
+	UseItem(bVoid);
 }
 
 void ASurCharacter::OnRep_CurrentlyEquippedItem(ASurItem* LastEquippedItem){
@@ -571,8 +605,10 @@ void ASurCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	InputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	InputComponent->BindAction("Interact", IE_Pressed, this, &ASurCharacter::Interact);
 	InputComponent->BindAction("Drop", IE_Pressed, this, &ASurCharacter::Drop);
-	InputComponent->BindAction("Q", IE_Pressed, this, &ASurCharacter::ActionQ);
-	InputComponent->BindAction("E", IE_Pressed, this, &ASurCharacter::ActionE);
+	InputComponent->BindAction("Q", IE_Pressed, this, &ASurCharacter::ActionQPress);
+	InputComponent->BindAction("Q", IE_Released, this, &ASurCharacter::ActionQRelease);
+	InputComponent->BindAction("E", IE_Pressed, this, &ASurCharacter::ActionEPress);
+	InputComponent->BindAction("E", IE_Released, this, &ASurCharacter::ActionERelease);
 	InputComponent->BindAction("LMB", IE_Pressed, this, &ASurCharacter::LMB);
 	InputComponent->BindAction("RMB", IE_Pressed, this, &ASurCharacter::RMB);
 	InputComponent->BindAction("MWU", IE_Pressed, this, &ASurCharacter::MWU);
@@ -633,61 +669,93 @@ void ASurCharacter::Interact(){
 	PickUpItem();
 }
 
-void ASurCharacter::ActionQ(){
+void ASurCharacter::ActionQPress(){
 	if (!bEnableInput) return;
 	if (bIsBuilding){
-		PRINT_SCREEN("SurCharacter [ActionQ] Pressed");
-		BuildingRotationModifier = FMath::Min(BuildingRotationModifier + 5.0f, 180.0f);
+		bIsQHeld = true;
+		ServerIsQHeld(true);		
 	}
 }
 
-void ASurCharacter::ActionE(){
+void ASurCharacter::ActionQRelease(){
 	if (!bEnableInput) return;
 	if (bIsBuilding){
-		PRINT_SCREEN("SurCharacter [ActionE] Pressed");
-		BuildingRotationModifier = FMath::Max(BuildingRotationModifier - 5.0f, -180.0f);
+		bIsQHeld = false;
+		ServerIsQHeld(false);
 	}
+}
+
+bool ASurCharacter::ServerIsQHeld_Validate(bool IsHeld){
+	return true;
+}
+
+void ASurCharacter::ServerIsQHeld_Implementation(bool IsHeld){
+	bIsQHeld = IsHeld;
+}
+
+void ASurCharacter::ActionEPress(){
+	if (!bEnableInput) return;
+	if (bIsBuilding){
+		bIsEHeld = true;
+		ServerIsEHeld(true);
+	}
+}
+
+void ASurCharacter::ActionERelease(){
+	if (!bEnableInput) return;
+	if (bIsBuilding){
+		bIsEHeld = false;
+		ServerIsEHeld(false);
+	}
+}
+
+bool ASurCharacter::ServerIsEHeld_Validate(bool IsHeld){
+	return true;
+}
+
+void ASurCharacter::ServerIsEHeld_Implementation(bool IsHeld){
+	bIsEHeld = IsHeld;
 }
 
 void ASurCharacter::LMB(){
 	if (!bEnableInput) return;
-	UseItem();
+	UseItem(false);
 }
 
 void ASurCharacter::RMB(){
 	if (!bEnableInput) return;
-
+	if (bIsBuilding){
+		UseItem(true);
+	}
 }
 
 void ASurCharacter::MWU(){
 	if (!bEnableInput) return;
-	if (bIsBuilding){
-		PRINT_SCREEN("SurCharacter [MWU] Pressed");
-		BuildingDistanceModifier = FMath::Min(BuildingDistanceModifier + 0.05f, 1.5f);
+
+
+
+	if (bIsBuilding) return;
+	int32 NewABIndex = ActionBarIndex + 1;
+	if (NewABIndex >= ActionBar->MaxSize){
+		NewABIndex = 0;
 	}
-	else{
-		int32 NewABIndex = ActionBarIndex + 1;
-		if (NewABIndex >= ActionBar->MaxSize){
-			NewABIndex = 0;
-		}
-		AdjustActionBarIndex(NewABIndex);
-	}
+	AdjustActionBarIndex(NewABIndex);
+	
 }
 
 void ASurCharacter::MWD(){
 	if (!bEnableInput) return;
-	if (bIsBuilding){
-		PRINT_SCREEN("SurCharacter [MWD] Pressed");
-		BuildingDistanceModifier = FMath::Max(BuildingDistanceModifier - 0.05f, 0.5f);
+
+
+
+	if (bIsBuilding) return;
+	int32 NewABIndex = ActionBarIndex - 1;
+	
+	if (NewABIndex < 0){
+		NewABIndex = ActionBar->MaxSize - 1;
 	}
-	else{
-		int32 NewABIndex = ActionBarIndex - 1;
-		
-		if (NewABIndex < 0){
-			NewABIndex = ActionBar->MaxSize - 1;
-		}
-		AdjustActionBarIndex(NewABIndex);
-	}
+	AdjustActionBarIndex(NewABIndex);
+
 }
 
 void ASurCharacter::Button1(){
@@ -733,6 +801,7 @@ void ASurCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 	DOREPLIFETIME_CONDITION(ASurCharacter, CurrentlyEquippedInventorySlot, COND_OwnerOnly);
 
 	DOREPLIFETIME_CONDITION(ASurCharacter, bIsBuilding, COND_OwnerOnly);
+
 
 }
 

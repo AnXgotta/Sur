@@ -16,6 +16,7 @@ class ASurBuildableItem : public ASurItem
 
 
 
+
 	// OVERLAP EVENTS
 
 	UFUNCTION()
@@ -29,6 +30,12 @@ class ASurBuildableItem : public ASurItem
 	//  INTERACTION  #######################################################################
 
 	
+	UFUNCTION()
+	void OnBeginBuilding();
+
+	UFUNCTION()
+	void OnEndBuilding(bool Cancelled);
+
 	virtual void OnItemEquipped();
 
 	virtual void OnItemUnEquipped();

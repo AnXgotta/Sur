@@ -22,6 +22,9 @@ ASurItem::ASurItem(const class FPostConstructInitializeProperties& PCIP)
 	bReplicateMovement = true;
 	bReplicates = true;
 
+
+	bShowNameOnTrace = true;
+
 }
 
 

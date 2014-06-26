@@ -14,6 +14,10 @@ ASurBuildableItem::ASurBuildableItem(const class FPostConstructInitializePropert
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	Mesh->SetSimulatePhysics(false);
 	Mesh->bGenerateOverlapEvents = true;
+
+
+	bShowNameOnTrace = false;
+
 }
 
 
@@ -33,6 +37,18 @@ void ASurBuildableItem::OnEndOverlap(AActor* OtherActor, UPrimitiveComponent* Ot
 
 
 //  INTERACTION  #######################################################################
+
+
+void ASurBuildableItem::OnBeginBuilding(){
+
+}
+
+void ASurBuildableItem::OnEndBuilding(bool Cancelled){
+
+
+}
+
+
 
 void ASurBuildableItem::OnItemEquipped(){
 	Super::OnItemEquipped();

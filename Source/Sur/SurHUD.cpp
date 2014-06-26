@@ -245,6 +245,7 @@ void ASurHUD::DrawCurrentlyTracedItem(){
 	ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
 	if (!TheChar) return;
 	if (!TheChar->CurrentlyTracedItem) return;
+	if (!TheChar->CurrentlyTracedItem->bShowNameOnTrace) return;
 
 	FVector UIPos = Project(TheChar->CurrentlyTracedItem->GetActorLocation());
 	DrawSurText(UIFont, TheChar->CurrentlyTracedItem->UIName.ToString(), UIPos.X, UIPos.Y, FColorYellow, 0.4f);

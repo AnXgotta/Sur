@@ -6,6 +6,7 @@
 #include "SurTypes.h"
 #include "SurItem.h"
 #include "SurConsumableItem.h"
+#include "SurBuildableItem.h"
 #include "SurInventory.h"
 #include "SurInventorySlot.h"
 #include "GameFramework/Character.h"
@@ -179,7 +180,7 @@ class ASurCharacter : public ACharacter
 		float BuildingRotationModifier;
 
 	UFUNCTION()
-		void BuildingTickHandle();
+		void BuildingTickHandle(float DeltaSeconds);
 
 	UFUNCTION()
 		void BuildProcessBegin();
@@ -204,10 +205,10 @@ class ASurCharacter : public ACharacter
 		void OnRep_CurrentlyEquippedItem(ASurItem* NewEquippedItem);
 
 	UFUNCTION()
-		void UseItem();
+		void UseItem(bool bVoid);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-		void ServerUseItem();
+		void ServerUseItem(bool bVoid);
 
 	UFUNCTION()
 		void HandleInventoryUITransaction(USurInventorySlot* FromSlot, USurInventorySlot* ToSlot);
@@ -240,10 +241,28 @@ class ASurCharacter : public ACharacter
 		void Interact();
 
 	UFUNCTION()
-		void ActionQ();
+		void ActionQPress();
 
 	UFUNCTION()
-		void ActionE();
+		void ActionQRelease();
+
+	UPROPERTY()
+		bool bIsQHeld;
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void ServerIsQHeld(bool IsHeld);
+
+	UFUNCTION()
+		void ActionEPress();
+
+	UFUNCTION()
+		void ActionERelease();
+
+	UPROPERTY()
+		bool bIsEHeld;
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void ServerIsEHeld(bool IsHeld);
 
 	UFUNCTION()
 		void LMB();
