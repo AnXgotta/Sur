@@ -7,6 +7,7 @@
 
 
 #define TRACE_CHANNEL_ITEM ECC_GameTraceChannel1
+#define COLLISION_CHANNEL_BUILDABLE ECC_GameTraceChannel2
 
 
 #define PRINT_SCREEN(arg0) GEngine->AddOnScreenDebugMessage(-1, 10, FColor::White,arg0)

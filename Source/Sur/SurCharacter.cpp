@@ -371,11 +371,11 @@ void ASurCharacter::BuildingTickHandle(float DeltaSeconds){
 	CurrentlyEquippedItem->SetActorRotation(CurrentBuildRotation);
 
 	if (bIsQHeld){
-		BuildingRotationModifier = BuildingRotationModifier + 30.0f * DeltaSeconds;//FMath::Min(BuildingRotationModifier + 5.0f * DeltaSeconds, 180.0f);
+		BuildingRotationModifier = BuildingRotationModifier + 30.0f * DeltaSeconds;
 	}
 
 	if (bIsEHeld){
-		BuildingRotationModifier = BuildingRotationModifier - 30.0f * DeltaSeconds;// FMath::Max(BuildingRotationModifier - 5.0f * DeltaSeconds, -180.0f);
+		BuildingRotationModifier = BuildingRotationModifier - 30.0f * DeltaSeconds;
 	}
 	
 	CurrentlyEquippedItem->AddActorLocalRotation(FRotator(0.0f, BuildingRotationModifier + CapsuleComponent->GetComponentRotation().Yaw, 0.0f));
@@ -404,13 +404,21 @@ void ASurCharacter::BuildProcessEnd(bool Cancelled){
 		return;
 	}
 
-	CurBuildable->OnEndBuilding(Cancelled);
+	
 
 	if (Cancelled){
+		CurBuildable->OnEndBuilding(Cancelled);
 		CurrentlyEquippedItem->SetActorLocationAndRotation(Mesh->GetSocketLocation(RIGHT_HAND_SOCKET), Mesh->GetSocketRotation(RIGHT_HAND_SOCKET));
 		PRINT_SCREEN("ASurCharacter [BuildProcessEnd] Cancelled");
 	}
 	else{
+		if (!CurBuildable->CanBuild()){
+			bIsBuilding = true;
+			return;
+		}
+
+		CurBuildable->OnEndBuilding(Cancelled);
+
 		const FVector SpawnPoint = CurrentlyEquippedItem->GetActorLocation();
 
 		UWorld* const World = GetWorld();

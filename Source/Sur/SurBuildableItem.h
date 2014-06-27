@@ -16,25 +16,46 @@ class ASurBuildableItem : public ASurItem
 
 
 
+	virtual void PostInitializeComponents() OVERRIDE;
 
 	// OVERLAP EVENTS
 
-	UFUNCTION()
-	void OnBeginOverlap(AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	UPROPERTY()
+	bool bInBuildablePosition;
+
+	UPROPERTY()
+		UMaterialInstanceDynamic* MI_ObjectMat;
 
 	UFUNCTION()
-		void OnEndOverlap(AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+		void SetInBuildablePosition(bool bCanBuild);
+
+	UFUNCTION()
+		void SetBuildableColor();
+
+	UFUNCTION()
+	void OnActorBeginOverlap(class AActor* OtherActor);
+
+	UFUNCTION()
+		void OnActorEndOverlap(class AActor* OtherActor);
 
 
 
 	//  INTERACTION  #######################################################################
 
+	UPROPERTY()
+		bool bHasBeenBuilt;
+
+	UFUNCTION()
+		bool HasBeenBuilt();
 	
 	UFUNCTION()
 	void OnBeginBuilding();
 
 	UFUNCTION()
 	void OnEndBuilding(bool Cancelled);
+
+	UFUNCTION()
+		bool CanBuild();
 
 	virtual void OnItemEquipped();
 
