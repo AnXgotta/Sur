@@ -11,7 +11,7 @@ ASurBuildableItem::ASurBuildableItem(const class FPostConstructInitializePropert
 
 	ItemActionType = EItemAction::Build;
 
-	Mesh->BodyInstance.SetObjectType(ECC_WorldStatic);
+	
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	Mesh->SetCollisionResponseToAllChannels(ECR_Overlap);
 	Mesh->SetCollisionResponseToChannel(COLLISION_CHANNEL_BUILDABLE, ECR_Ignore);
@@ -19,7 +19,7 @@ ASurBuildableItem::ASurBuildableItem(const class FPostConstructInitializePropert
 	Mesh->bGenerateOverlapEvents = true;
 	bShowNameOnTrace = false;
 
-	bInBuildablePosition = true;
+	OverlappedObjects = 0;
 	bHasBeenBuilt = false;
 
 	AActor::OnActorBeginOverlap.AddDynamic(this, &ASurBuildableItem::OnActorBeginOverlap);
@@ -38,20 +38,17 @@ void ASurBuildableItem::PostInitializeComponents(){
 
 //  OVERLAP EVENTS  ################################################################
 
-void ASurBuildableItem::SetInBuildablePosition(bool bCanBuild){
-	bInBuildablePosition = bCanBuild;
-}
-
 void ASurBuildableItem::SetBuildableColor(){
 	if (!MI_ObjectMat){
 		PRINT_SCREEN("Mat Null?");
 		return;
 	}
-	if (!bInBuildablePosition){
-		
+	if (OverlappedObjects > 0){		
+		PRINT_SCREEN("Red");
 		MI_ObjectMat->SetScalarParameterValue(TEXT("RedEmissive"), 0.5f);	
 	}
 	else{
+		PRINT_SCREEN("None");
 		MI_ObjectMat->SetScalarParameterValue(TEXT("RedEmissive"), 0.0f);
 	}
 	
@@ -59,14 +56,14 @@ void ASurBuildableItem::SetBuildableColor(){
 
 
 void ASurBuildableItem::OnActorBeginOverlap(class AActor* OtherActor){
-	if (bHasBeenBuilt || !bInBuildablePosition) return;
-	bInBuildablePosition = false;
+	if (bHasBeenBuilt) return;
+	OverlappedObjects++;
 	SetBuildableColor();
 }
 
 void ASurBuildableItem::OnActorEndOverlap(class AActor* OtherActor){
-	if (bHasBeenBuilt || bInBuildablePosition) return;
-	bInBuildablePosition = true;
+	if (bHasBeenBuilt) return;
+	OverlappedObjects--;
 	SetBuildableColor();
 }
 
@@ -83,6 +80,7 @@ void ASurBuildableItem::OnBeginBuilding(){
 void ASurBuildableItem::OnEndBuilding(bool Cancelled){
 
 	if (!Cancelled){
+		PRINT_SCREEN("END BUILD");
 		bHasBeenBuilt = true;
 		Mesh->SetCollisionResponseToAllChannels(ECR_Block);
 	}
@@ -90,9 +88,9 @@ void ASurBuildableItem::OnEndBuilding(bool Cancelled){
 
 }
 
-bool ASurBuildableItem::CanBuild(){
-	
-	return bInBuildablePosition;
+
+bool ASurBuildableItem::CanBuild(){	
+	return OverlappedObjects == 0;
 }
 
 bool ASurBuildableItem::HasBeenBuilt(){
@@ -113,4 +111,5 @@ void ASurBuildableItem::OnUseItem(){
 	Super::OnUseItem();
 	//Mesh->SetCollisionResponseToAllChannels(ECC_);
 }
+
 

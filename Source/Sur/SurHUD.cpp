@@ -7,6 +7,7 @@
 
 #define BUTTONTYPE_INVENTORY_SLOT 	1
 #define BUTTONTYPE_ACTIONBAR_SLOT	2
+#define BUTTONTYPE_CRAFT_SLOT	3
 
 
 #define CANVAS_WHITE if(Canvas) Canvas->SetDrawColor(FColor_White);
@@ -106,6 +107,7 @@ int32 ASurHUD::CheckCursorInButton(const TArray<FSurButtonStruct>& ButtonArray){
 						PRINT_SCREEN("Dropped into Inven Slot");
 						TheChar->HandleInventoryUITransaction(CurInventorySlot, TheChar->Inventory->Inventory[CurCheckButton->index]);
 						break;
+
 					default:
 						break;
 					}
@@ -132,6 +134,9 @@ int32 ASurHUD::CheckCursorInButton(const TArray<FSurButtonStruct>& ButtonArray){
 					if (TheChar->Inventory->Inventory[CurCheckButton->index]->IsSlotEmpty()) return -1;
 					CurInventorySlot = TheChar->Inventory->Inventory[CurCheckButton->index];
 					break;
+				case BUTTONTYPE_CRAFT_SLOT:
+					PRINT_SCREEN("Picked Crafting Slot");
+					break;
 				default:
 					break;
 				}
@@ -154,6 +159,8 @@ void ASurHUD::DrawActionBar(){
 	USurInventory* ActionBar = TheChar->ActionBar;
 	if (!ActionBar) return;
 	
+	ButtonsInventory.Empty();
+
 	float TextureSize = 0.0625f * ScreenRes.X;
 	for (int i = 0; i < ActionBar->Inventory.Num(); i++){
 		FSurButtonStruct NewSlot;
@@ -192,6 +199,8 @@ void ASurHUD::DrawInventory(){
 	USurInventory* Inventory = TheChar->Inventory;
 	if (!Inventory) return;
 
+	ButtonsActionBar.Empty();
+
 	int slotIndex = 0;
 
 	float TextureSize = 0.0625f * ScreenRes.X;
@@ -223,6 +232,98 @@ void ASurHUD::DrawInventory(){
 	CheckCursorInButton(ButtonsInventory);
 }
  
+void ASurHUD::DrawCurrentlyCraftableList(){
+
+
+	ButtonsCrafting.Empty();
+
+	float TextureSize = 0.1f * ScreenRes.X;
+	for (int i = 0; i < CurrentlyCraftableList.Num(); i++){
+		FSurButtonStruct NewSlot;
+		NewSlot.type = BUTTONTYPE_CRAFT_SLOT;
+		NewSlot.minX = (0.80 * ScreenRes.X);
+		NewSlot.maxX = NewSlot.minX + TextureSize;
+		NewSlot.minY = (0.20f * ScreenRes.Y) + (i * (TextureSize * 0.25f));
+		NewSlot.maxY = NewSlot.minY + (TextureSize * 0.25f);
+		NewSlot.index = i;
+
+
+		VDrawTile(InventorySlotBackground, NewSlot.minX, NewSlot.minY, NewSlot.maxX - NewSlot.minX, NewSlot.maxY - NewSlot.minY, FColorBlack);
+		
+
+		DrawSurText(UIFont, CurrentlyCraftableList[i].ItemName.ToString(), NewSlot.minX, NewSlot.minY, FColorBlack, 0.5f);
+		DrawSurText(UIFont, FString::FromInt(CurrentlyCraftableList[i].NumberCraftable), NewSlot.maxX, NewSlot.minY, FColorBlack, 0.5f);
+
+		ButtonsCrafting.Add(NewSlot);
+	}
+
+	CheckCursorInButton(ButtonsCrafting);
+}
+
+void ASurHUD::UpdateCurrentlyCraftableList(){
+	ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
+	if (!TheChar) return;
+	USurInventory* Inventory = TheChar->Inventory;
+	if (!Inventory) return;
+	USurInventory* ActionBar = TheChar->ActionBar;
+	if (!ActionBar) return;
+
+	ItemizedInventoryMap.Empty();
+	CurrentlyCraftableList.Empty();
+
+	FName *CurrentItemName;
+
+	for (int i = 0; i < Inventory->Inventory.Num(); i++){
+		if (Inventory->Inventory[i]->IsSlotEmpty()) continue;
+		CurrentItemName = &Inventory->Inventory[i]->ItemDisplayName;
+		if (!CurrentItemName) continue;
+		if (ItemizedInventoryMap.Contains(*CurrentItemName)){
+			ItemizedInventoryMap.Add(*CurrentItemName, Inventory->Inventory[i]->NumberItemsStacked + ItemizedInventoryMap.FindRef(*CurrentItemName));
+		}else{
+			ItemizedInventoryMap.Add(*CurrentItemName, Inventory->Inventory[i]->NumberItemsStacked);
+		}
+		CurrentItemName = NULL;
+	}
+
+	for (int i = 0; i < ActionBar->Inventory.Num(); i++){
+		if (ActionBar->Inventory[i]->IsSlotEmpty()) continue;
+		CurrentItemName = &ActionBar->Inventory[i]->ItemDisplayName;
+		if (!CurrentItemName) continue;
+		if (ItemizedInventoryMap.Contains(*CurrentItemName)){
+			ItemizedInventoryMap.Add(*CurrentItemName, ActionBar->Inventory[i]->NumberItemsStacked + ItemizedInventoryMap.FindRef(*CurrentItemName));
+		}else{
+			ItemizedInventoryMap.Add(*CurrentItemName, ActionBar->Inventory[i]->NumberItemsStacked);
+		}
+		CurrentItemName = NULL;
+	}
+
+	FCraftableItemReqs* CurrentReqs;
+
+	for (int i = 0; i < CraftableItemList.Num(); i++){
+		int32 MaxBuildAmount = 9999;
+		for (int j = 0; j < CraftableItemList[i].Ingredients.Num(); j++){
+			CurrentReqs = &CraftableItemList[i].Ingredients[j];
+			if (!CurrentReqs) continue;
+			if (ItemizedInventoryMap.Contains(CurrentReqs->ReqName)){
+				MaxBuildAmount = FMath::Min(MaxBuildAmount, ItemizedInventoryMap.FindRef(CurrentReqs->ReqName) / CurrentReqs->Amount);
+				//PRINT_SCREEN(FString::Printf(TEXT("%d/%d"), ItemizedInventoryMap.FindRef(CurrentReqs->ReqName) , CurrentReqs->Amount));
+			}
+			else{
+				MaxBuildAmount = 9999;
+				CurrentReqs = NULL;
+				break;
+			}
+			CurrentReqs = NULL;
+		}
+
+		FCraftableItem NewItem = FCraftableItem(CraftableItemList[i]);
+		NewItem.NumberCraftable = MaxBuildAmount;
+		CurrentlyCraftableList.Add(NewItem);
+	}
+
+
+}
+
 void ASurHUD::DrawPlayerStatus(){
 	ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
 	if (!TheChar) return;
@@ -349,13 +450,13 @@ void ASurHUD::ResetStateInfo(){
 	ActiveButton_Tip 		= "";
 }
  
-void ASurHUD::SetScreenResolution(float ScreenX, float ScreenY){
-	ScreenRes.X = ScreenX;
-	ScreenRes.Y = ScreenY;
+void ASurHUD::SetScreenResolution(){
+	ScreenRes.X = Canvas->SizeX;
+	ScreenRes.Y = Canvas->SizeY;
 }
 
 void ASurHUD::DrawHUD(){
-
+	SetScreenResolution();
 	//Have PC for Input Checks and Mouse Cursor?
 	if(!ThePC){
 		//Attempt to Reacquire PC
@@ -388,10 +489,16 @@ void ASurHUD::DrawHUD(){
 		DrawCurrentlyTracedItem();
 		DrawActionBar();
 		DrawPlayerStatus();		
+
+		
+
 	}
 
 	if (bDrawInventory){
 		DrawInventory();
+		UpdateCurrentlyCraftableList();
+		DrawCurrentlyCraftableList();
+		
 	}
  
 	//Reset States

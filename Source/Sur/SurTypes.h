@@ -75,3 +75,76 @@ struct FConsumableItemData{
 
 
 };
+
+USTRUCT()
+struct FSurButtonStruct {
+	GENERATED_USTRUCT_BODY()
+
+	//Vars
+	int32 type;
+	FString	toolTip;
+	float minX;
+	float maxX;
+	float minY;
+	float maxY;
+	int32 index;
+
+	//~
+
+	//default properties
+
+	FSurButtonStruct()	{
+		type = -1;
+		toolTip = "";
+		minX = 0;
+		maxX = 0;
+		minY = 0;
+		maxY = 0;
+		index = -1;
+	}
+};
+
+USTRUCT()
+struct FCraftableItemReqs{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditDefaultsOnly, Category = Name)
+	FName ReqName;
+
+	UPROPERTY(EditDefaultsOnly, Category = Amount)
+		int32 Amount;
+
+	FCraftableItemReqs(){
+		//ReqName = TEXT("");
+		//int32 Amount = 0;
+	}
+};
+
+USTRUCT()
+struct FCraftableItem {
+
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditDefaultsOnly, Category = Name)
+	FName ItemName;
+
+	UPROPERTY(EditDefaultsOnly, Category = Blueprint)
+	TSubclassOf<class ASurItem> ItemBlueprint;
+
+	UPROPERTY(EditDefaultsOnly, Category = BuildTime)
+		float BuildTime;
+
+	UPROPERTY(EditDefaultsOnly, Category = NameArray)
+		TArray<FCraftableItemReqs> Ingredients;
+
+	
+
+	UPROPERTY()
+		int32 NumberCraftable;
+
+	FCraftableItem(){
+		//ItemBlueprint = NULL;
+		//Ingredients = NULL;
+		NumberCraftable = 0;
+	}
+};

@@ -21,13 +21,7 @@ class ASurBuildableItem : public ASurItem
 	// OVERLAP EVENTS
 
 	UPROPERTY()
-	bool bInBuildablePosition;
-
-	UPROPERTY()
 		UMaterialInstanceDynamic* MI_ObjectMat;
-
-	UFUNCTION()
-		void SetInBuildablePosition(bool bCanBuild);
 
 	UFUNCTION()
 		void SetBuildableColor();
@@ -41,6 +35,9 @@ class ASurBuildableItem : public ASurItem
 
 
 	//  INTERACTION  #######################################################################
+
+	UPROPERTY()
+		int32 OverlappedObjects;
 
 	UPROPERTY()
 		bool bHasBeenBuilt;

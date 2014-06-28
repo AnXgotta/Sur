@@ -4,35 +4,10 @@
 
 #include "GameFramework/HUD.h"
 #include "SurInventorySlot.h"
+#include "SurTypes.h"
 #include "SurHUD.generated.h"
 
-USTRUCT()
-struct FSurButtonStruct {
-	GENERATED_USTRUCT_BODY()
 
-	//Vars
-	int32 type;
-	FString	toolTip;
-	float minX;
-	float maxX;
-	float minY;
-	float maxY;
-	int32 index;
-
-	//~
-
-	//default properties
-
-	FSurButtonStruct()	{
-		type = -1;
-		toolTip = "";
-		minX = 0;
-		maxX = 0;
-		minY = 0;
-		maxY = 0;
-		index = -1;
-	}
-};
 
 
 UCLASS()
@@ -66,6 +41,21 @@ class ASurHUD : public AHUD
 		bool bIsHoldingLMB;
 
 
+	//  CRAFTING  ######################################################################
+
+	UPROPERTY(EditDefaultsOnly, Category=CraftableList)
+		TArray<FCraftableItem> CraftableItemList;
+
+	UPROPERTY()
+		TArray<FCraftableItem> CurrentlyCraftableList;
+
+		TMap<FName, int32> ItemizedInventoryMap;
+
+	UFUNCTION()
+		void DrawCurrentlyCraftableList();
+
+	UFUNCTION()
+		void UpdateCurrentlyCraftableList();
 
 
 	//  TEXT  ############################################################################
@@ -86,7 +76,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = ScreenResolution)
-		void SetScreenResolution(float ScreenX, float ScreenY);
+		void SetScreenResolution();
 
 
 	/** HUD Scaling */
@@ -98,6 +88,7 @@ public:
 
 	TArray<FSurButtonStruct> ButtonsActionBar;
 	TArray<FSurButtonStruct> ButtonsInventory;
+	TArray<FSurButtonStruct> ButtonsCrafting;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = T2D)
