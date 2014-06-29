@@ -152,10 +152,8 @@ USurInventorySlot* USurInventory::FindOpenSlotForNewItem(ASurItem* NewItem){
 		USurInventorySlot* CurrentSlot = Inventory[i];
 		if (!CurrentSlot) continue;
 		if (CurrentSlot->IsSlotEmpty()){
-			PRINT_SCREEN("SurInventory [FindSlotForNewItem] Added to New Slot");
 			return CurrentSlot;
 		}
 	}
 	return NULL;
 }
-

@@ -7,8 +7,11 @@
 ASurItem::ASurItem(const class FPostConstructInitializeProperties& PCIP)
 	: Super(PCIP)
 {
+	BaseComponent = PCIP.CreateDefaultSubobject<USceneComponent>(this, TEXT("BaseComponent"));
+	RootComponent = BaseComponent;
+
 	Mesh = PCIP.CreateDefaultSubobject<UStaticMeshComponent>(this, TEXT("ItemMesh"));
-	RootComponent = Mesh;
+	Mesh->AttachParent = RootComponent;
 	Mesh->SetOnlyOwnerSee(false);
 	Mesh->bCastDynamicShadow = true;
 	Mesh->CastShadow = true;

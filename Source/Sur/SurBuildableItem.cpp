@@ -11,13 +11,21 @@ ASurBuildableItem::ASurBuildableItem(const class FPostConstructInitializePropert
 
 	ItemActionType = EItemAction::Build;
 
+	EquippedMesh = PCIP.CreateDefaultSubobject<UStaticMeshComponent>(this, TEXT("EquippedMesh"));
+	EquippedMesh->AttachParent = RootComponent;
+	EquippedMesh->bVisible = true;
+	EquippedMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	Mesh->SetCollisionResponseToAllChannels(ECR_Overlap);
 	Mesh->SetCollisionResponseToChannel(COLLISION_CHANNEL_BUILDABLE, ECR_Ignore);
 	Mesh->SetSimulatePhysics(false);
 	Mesh->bGenerateOverlapEvents = true;
+	Mesh->bVisible = false;
+
 	bShowNameOnTrace = false;
+
 
 	OverlappedObjects = 0;
 	bHasBeenBuilt = false;
@@ -74,7 +82,8 @@ void ASurBuildableItem::OnActorEndOverlap(class AActor* OtherActor){
 
 
 void ASurBuildableItem::OnBeginBuilding(){
-
+	EquippedMesh->bVisible = false;
+	Mesh->bVisible = true;
 }
 
 void ASurBuildableItem::OnEndBuilding(bool Cancelled){
@@ -83,6 +92,10 @@ void ASurBuildableItem::OnEndBuilding(bool Cancelled){
 		PRINT_SCREEN("END BUILD");
 		bHasBeenBuilt = true;
 		Mesh->SetCollisionResponseToAllChannels(ECR_Block);
+	}
+	else{
+		EquippedMesh->bVisible = true;
+		Mesh->bVisible = false;
 	}
 	
 
@@ -100,11 +113,15 @@ bool ASurBuildableItem::HasBeenBuilt(){
 
 void ASurBuildableItem::OnItemEquipped(){
 	Super::OnItemEquipped();
-	
+	EquippedMesh->SetSimulatePhysics(false);
+	EquippedMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	EquippedMesh->bVisible = true;
+	Mesh->bVisible = false;
 }
 
 void ASurBuildableItem::OnItemUnEquipped(){
 	Super::OnItemUnEquipped();
+	// destroyed on unequip by SurItem parent
 }
 
 void ASurBuildableItem::OnUseItem(){

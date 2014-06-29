@@ -57,6 +57,12 @@ class ASurHUD : public AHUD
 	UFUNCTION()
 		void UpdateCurrentlyCraftableList();
 
+	UFUNCTION()
+		void CraftItem(FCraftableItem CraftableItem);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void ServerCraftItem(FCraftableItem CraftableItem);
+
 
 	//  TEXT  ############################################################################
 

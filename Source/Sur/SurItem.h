@@ -24,6 +24,9 @@ class ASurItem : public AActor
 {
 	GENERATED_UCLASS_BODY()
 
+	UPROPERTY(VisibleDefaultsOnly, Category = SceneComp)
+	TSubobjectPtr<USceneComponent> BaseComponent;
+
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = AAMesh)
 	TSubobjectPtr<class UStaticMeshComponent> Mesh;
 

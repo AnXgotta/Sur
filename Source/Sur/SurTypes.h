@@ -1,4 +1,6 @@
 
+
+#include "SurItem.h"
 #include "SurTypes.generated.h"
 #pragma once
 
@@ -125,11 +127,11 @@ struct FCraftableItem {
 
 	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY(EditDefaultsOnly, Category = Name)
+	UPROPERTY(EditDefaultsOnly, Category = Item)
 	FName ItemName;
 
-	UPROPERTY(EditDefaultsOnly, Category = Blueprint)
-	TSubclassOf<class ASurItem> ItemBlueprint;
+	UPROPERTY(EditDefaultsOnly, Category = Item)
+	TSubclassOf<class ASurItem> ItemInst;
 
 	UPROPERTY(EditDefaultsOnly, Category = BuildTime)
 		float BuildTime;
@@ -137,7 +139,8 @@ struct FCraftableItem {
 	UPROPERTY(EditDefaultsOnly, Category = NameArray)
 		TArray<FCraftableItemReqs> Ingredients;
 
-	
+	UPROPERTY()
+		int32 Index;
 
 	UPROPERTY()
 		int32 NumberCraftable;
@@ -146,5 +149,6 @@ struct FCraftableItem {
 		//ItemBlueprint = NULL;
 		//Ingredients = NULL;
 		NumberCraftable = 0;
+		Index = 0;
 	}
 };

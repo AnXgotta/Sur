@@ -269,6 +269,11 @@ void ASurCharacter::ServerPickUpItem_Implementation(){
 	PickUpItem();
 }
 
+bool ASurCharacter::ServerAddCraftedItemToInventory(FCraftableItem CraftedItem){
+
+	return true;
+}
+
 void ASurCharacter::DropEquippedItem(){
 
 	if (!CurrentlyEquippedItem) return;
@@ -547,7 +552,7 @@ void ASurCharacter::EquipItem(USurInventorySlot* EquipItemSlot){
 				CurrentlyEquippedItem = NewSpawnedItem;
 				CurrentlyEquippedItem->OnItemEquipped();
 				CurrentlyEquippedInventorySlot = EquipItemSlot;
-				CurrentlyEquippedItem->Mesh->AttachTo(Mesh, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
+				CurrentlyEquippedItem->BaseComponent->AttachTo(Mesh, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
 			}
 		}
 	}
@@ -571,21 +576,17 @@ void ASurCharacter::HandleInventoryUITransaction(USurInventorySlot* FromSlot, US
 	if (ToSlot->IsSlotEmpty()){
 		ToSlot->SetSlotInformationFromSlot(FromSlot);
 		FromSlot->ClearSlotInformation();
-		PRINT_SCREEN("SurCharacter [HandleIUIT] To Empty Slot");
 	}else if (FromSlot->ItemBlueprint == ToSlot->ItemBlueprint){
 		if (FromSlot->NumberItemsStacked <= ToSlot->SpaceRemaining()){
 			ToSlot->NumberItemsStacked += FromSlot->NumberItemsStacked;
 			FromSlot->ClearSlotInformation();
-			PRINT_SCREEN("SurCharacter [HandleIUIT] To Same Type Slot");
 		}else{
 			FromSlot->NumberItemsStacked -= ToSlot->SpaceRemaining();
 			ToSlot->NumberItemsStacked = ToSlot->MaxStackableInSlot;
-			PRINT_SCREEN("SurCharacter [HandleIUIT] To Same Type Slot Filled");
 		}
 	}
 	else{
 		ToSlot->SwapSlotInformation(FromSlot);
-		PRINT_SCREEN("SurCharacter [HandleIUIT] To Swapped Slot");
 	}
 
 

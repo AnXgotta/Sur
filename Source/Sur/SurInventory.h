@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "SurTypes.h"
 #include "Object.h"
 #include "SurItem.h"
 #include "SurInventorySlot.h"

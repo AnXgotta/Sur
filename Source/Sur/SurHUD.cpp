@@ -135,7 +135,8 @@ int32 ASurHUD::CheckCursorInButton(const TArray<FSurButtonStruct>& ButtonArray){
 					CurInventorySlot = TheChar->Inventory->Inventory[CurCheckButton->index];
 					break;
 				case BUTTONTYPE_CRAFT_SLOT:
-					PRINT_SCREEN("Picked Crafting Slot");
+					PRINT_SCREEN("Picked Crafting Slot");					
+					CraftItem(CraftableItemList[CurCheckButton->index]);
 					break;
 				default:
 					break;
@@ -232,6 +233,8 @@ void ASurHUD::DrawInventory(){
 	CheckCursorInButton(ButtonsInventory);
 }
  
+//  CRAFT  ##########################################################################
+
 void ASurHUD::DrawCurrentlyCraftableList(){
 
 
@@ -245,7 +248,7 @@ void ASurHUD::DrawCurrentlyCraftableList(){
 		NewSlot.maxX = NewSlot.minX + TextureSize;
 		NewSlot.minY = (0.20f * ScreenRes.Y) + (i * (TextureSize * 0.25f));
 		NewSlot.maxY = NewSlot.minY + (TextureSize * 0.25f);
-		NewSlot.index = i;
+		NewSlot.index = CurrentlyCraftableList[i].Index;
 
 
 		VDrawTile(InventorySlotBackground, NewSlot.minX, NewSlot.minY, NewSlot.maxX - NewSlot.minX, NewSlot.maxY - NewSlot.minY, FColorBlack);
@@ -317,12 +320,91 @@ void ASurHUD::UpdateCurrentlyCraftableList(){
 		}
 
 		FCraftableItem NewItem = FCraftableItem(CraftableItemList[i]);
+		NewItem.Index = i;
 		NewItem.NumberCraftable = MaxBuildAmount;
 		CurrentlyCraftableList.Add(NewItem);
 	}
 
 
 }
+
+void ASurHUD::CraftItem(FCraftableItem CraftableItem){
+	PRINT_SCREEN("ClientCraftItem");
+	if (Role < ROLE_Authority){
+		ServerCraftItem(CraftableItem);
+		return;
+	}
+	ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());
+	if (!TheChar) return;
+	USurInventory* Inventory = TheChar->Inventory;
+	if (!Inventory) return;
+	USurInventory* ActionBar = TheChar->ActionBar;
+	if (!ActionBar) return;
+	
+	// remove required items
+	if (!TheChar->Controller) return;
+
+	FVector CameraLocation;
+	FRotator CameraRotation;
+	TheChar->Controller->GetPlayerViewPoint(CameraLocation, CameraRotation);
+	const FVector SpawnPoint = CameraLocation + (FVector(0.0f, 0.0f, -1.0f) * 2000.0f);
+
+	ASurItem* CraftedItem = NULL;
+	UWorld* const World = GetWorld();
+	if (World){
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Instigator = TheChar;
+		CraftedItem = World->SpawnActor<ASurItem>(CraftableItem.ItemInst, SpawnPoint, FRotator(0.0f, 0.0f, 0.0f), SpawnParams);
+		if (CraftedItem){
+			CraftedItem->bHidden = true;
+			CraftedItem->SetActorEnableCollision(false);
+		}
+	}
+	if (!CraftedItem){
+		PRINT_SCREEN("Crafted Item NULL");
+		return;
+	}
+	
+	if (TheChar->Inventory->AddItemToInventoryFromItemStack(CraftedItem) > 0){
+		if (TheChar->ActionBar->AddItemToInventoryFromItemStack(CraftedItem) > 0){
+			if (TheChar->Inventory->AddItemToInventoryFromItemOpen(CraftedItem) > 0){
+				if (TheChar->ActionBar->AddItemToInventoryFromItemOpen(CraftedItem) > 0){
+					// most likely inventory is full... or an error of some kind
+					PRINT_SCREEN("SurHUD:  [CraftItem]  Inventory Full!");
+					// drop crafted item
+					CraftedItem->bHidden = false;
+					CraftedItem->SetActorEnableCollision(true);
+					CraftedItem->ItemDropped(CameraRotation.Vector());
+
+					return;
+				}
+			}
+		}
+	}
+
+
+	if (!TheChar->CurrentlyEquippedItem){
+		PRINT_SCREEN("Equipped crafted item");
+		TheChar->EquipItem(TheChar->ActionBar->Inventory[TheChar->ActionBarIndex]);
+	}
+
+
+	PRINT_SCREEN("ServerCraftItem");
+
+
+
+
+}
+
+bool ASurHUD::ServerCraftItem_Validate(FCraftableItem CraftableItem){
+	return true;
+}
+
+void ASurHUD::ServerCraftItem_Implementation(FCraftableItem CraftableItem){
+	CraftItem(CraftableItem);
+}
+
+
 
 void ASurHUD::DrawPlayerStatus(){
 	ASurCharacter* TheChar = Cast<ASurCharacter >(GetOwningPawn());

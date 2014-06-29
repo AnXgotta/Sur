@@ -13,8 +13,10 @@ class ASurBuildableItem : public ASurItem
 {
 	GENERATED_UCLASS_BODY()
 
+	
 
-
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	TSubobjectPtr<UStaticMeshComponent> EquippedMesh;
 
 	virtual void PostInitializeComponents() OVERRIDE;
 

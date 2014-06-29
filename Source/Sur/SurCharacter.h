@@ -152,7 +152,10 @@ class ASurCharacter : public ACharacter
 	UFUNCTION(server, reliable, WithValidation)
 		void ServerPickUpItem();
 
-	// drop item from inventory
+	UFUNCTION()
+		bool ServerAddCraftedItemToInventory(FCraftableItem CraftedItem);		
+		
+		// drop item from inventory
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 		void DropEquippedItem();
 
