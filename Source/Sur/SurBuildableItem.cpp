@@ -14,6 +14,9 @@ ASurBuildableItem::ASurBuildableItem(const class FPostConstructInitializePropert
 	EquippedMesh = PCIP.CreateDefaultSubobject<UStaticMeshComponent>(this, TEXT("EquippedMesh"));
 	EquippedMesh->AttachParent = RootComponent;
 	EquippedMesh->bVisible = true;
+	EquippedMesh->SetOnlyOwnerSee(false);
+	EquippedMesh->bCastDynamicShadow = true;
+	EquippedMesh->CastShadow = true;
 	EquippedMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	
@@ -83,13 +86,24 @@ void ASurBuildableItem::OnActorEndOverlap(class AActor* OtherActor){
 
 void ASurBuildableItem::OnBeginBuilding(){
 	EquippedMesh->bVisible = false;
+	EquippedMesh->SetOnlyOwnerSee(false);
+	EquippedMesh->bCastDynamicShadow = false;
+	EquippedMesh->CastShadow = false;
 	Mesh->bVisible = true;
+	Mesh->SetOnlyOwnerSee(false);
+	Mesh->bCastDynamicShadow = true;
+	Mesh->CastShadow = true;
 }
 
 void ASurBuildableItem::OnEndBuilding(bool Cancelled){
 
 	if (!Cancelled){
 		PRINT_SCREEN("END BUILD");
+		EquippedMesh->bVisible = false;
+		Mesh->bVisible = true;
+		Mesh->SetOnlyOwnerSee(false);
+		Mesh->bCastDynamicShadow = true;
+		Mesh->CastShadow = true;
 		bHasBeenBuilt = true;
 		Mesh->SetCollisionResponseToAllChannels(ECR_Block);
 	}

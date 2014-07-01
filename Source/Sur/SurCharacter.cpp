@@ -399,30 +399,24 @@ void ASurCharacter::BuildProcessBegin(){
 	CurBuildable->OnBeginBuilding();
 }
 
-
+// [server]
 void ASurCharacter::BuildProcessEnd(bool Cancelled){
 	bIsBuilding = false;
 	ASurBuildableItem* CurBuildable = Cast<ASurBuildableItem>(CurrentlyEquippedItem);
 	if (!CurBuildable){
 		// should never happen
-		PRINT_SCREEN("ASurCharacter [BuildProcessEnd] ShouldNeverHappen");
 		return;
 	}
-
-	
 
 	if (Cancelled){
 		CurBuildable->OnEndBuilding(Cancelled);
 		CurrentlyEquippedItem->SetActorLocationAndRotation(Mesh->GetSocketLocation(RIGHT_HAND_SOCKET), Mesh->GetSocketRotation(RIGHT_HAND_SOCKET));
-		PRINT_SCREEN("ASurCharacter [BuildProcessEnd] Cancelled");
 	}
 	else{
 		if (!CurBuildable->CanBuild()){
 			bIsBuilding = true;
 			return;
 		}
-
-		CurBuildable->OnEndBuilding(Cancelled);
 
 		const FVector SpawnPoint = CurrentlyEquippedItem->GetActorLocation();
 
@@ -432,6 +426,10 @@ void ASurCharacter::BuildProcessEnd(bool Cancelled){
 			SpawnParams.Instigator = this;
 			ASurItem* DroppedItem = World->SpawnActor<ASurItem>(CurrentlyEquippedItem->SurItemBlueprint, CurrentlyEquippedItem->GetActorLocation(), CurrentlyEquippedItem->GetActorRotation(), SpawnParams);
 			if (DroppedItem){
+				ASurBuildableItem* NewBuiltItem = Cast<ASurBuildableItem>(DroppedItem);
+				if (NewBuiltItem){
+					NewBuiltItem->OnEndBuilding(Cancelled);
+				}
 				CurrentlyEquippedInventorySlot->RemoveItemFromSlot(1);
 				if (CurrentlyEquippedInventorySlot->IsSlotEmpty()){
 					CurrentlyEquippedInventorySlot = NULL;
@@ -441,14 +439,6 @@ void ASurCharacter::BuildProcessEnd(bool Cancelled){
 			}
 		}
 	}
-}
-
-bool ASurCharacter::ServerBuildProcessEnd_Validate(bool Cancelled){
-	return true;
-}
-
-void ASurCharacter::ServerBuildProcessEnd_Implementation(bool Cancelled){
-
 }
 
 
@@ -522,7 +512,7 @@ void ASurCharacter::OnRep_CurrentlyEquippedItem(ASurItem* LastEquippedItem){
 
 	CurrentlyEquippedItem->OnItemEquipped();	
 
-	CurrentlyEquippedItem->Mesh->AttachTo(Mesh, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
+	CurrentlyEquippedItem->BaseComponent->AttachTo(Mesh, RIGHT_HAND_SOCKET, EAttachLocation::SnapToTarget);
 	PRINT_SCREEN("ASurCharacter [OnRep_CurrentlyEquippedItem] Client Replicated");
 }
 

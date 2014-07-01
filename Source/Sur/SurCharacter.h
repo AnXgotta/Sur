@@ -191,9 +191,6 @@ class ASurCharacter : public ACharacter
 	UFUNCTION()
 		void BuildProcessEnd(bool Cancelled);
 
-	UFUNCTION(Server, Reliable, WithValidation)
-		void ServerBuildProcessEnd(bool Cancelled);
-
 	
 	//  INTERACTION  #########################################################################
 

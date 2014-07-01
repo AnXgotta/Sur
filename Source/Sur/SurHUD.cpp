@@ -303,18 +303,24 @@ void ASurHUD::UpdateCurrentlyCraftableList(){
 	FCraftableItemReqs* CurrentReqs;
 
 	for (int i = 0; i < CraftableItemList.Num(); i++){
-		int32 MaxBuildAmount = 9999;
+		int32 MaxBuildAmount = 0;
 		for (int j = 0; j < CraftableItemList[i].Ingredients.Num(); j++){
 			CurrentReqs = &CraftableItemList[i].Ingredients[j];
 			if (!CurrentReqs) continue;
 			if (ItemizedInventoryMap.Contains(CurrentReqs->ReqName)){
-				MaxBuildAmount = FMath::Min(MaxBuildAmount, ItemizedInventoryMap.FindRef(CurrentReqs->ReqName) / CurrentReqs->Amount);
+				if (MaxBuildAmount == 0){
+					MaxBuildAmount = ItemizedInventoryMap.FindRef(CurrentReqs->ReqName) / CurrentReqs->Amount;
+				}
+				else{
+					MaxBuildAmount = FMath::Min(MaxBuildAmount, ItemizedInventoryMap.FindRef(CurrentReqs->ReqName) / CurrentReqs->Amount);
+				}
+				
 				//PRINT_SCREEN(FString::Printf(TEXT("%d/%d"), ItemizedInventoryMap.FindRef(CurrentReqs->ReqName) , CurrentReqs->Amount));
 			}
 			else{
 				MaxBuildAmount = 9999;
 				CurrentReqs = NULL;
-				break;
+				return;
 			}
 			CurrentReqs = NULL;
 		}
@@ -329,7 +335,6 @@ void ASurHUD::UpdateCurrentlyCraftableList(){
 }
 
 void ASurHUD::CraftItem(FCraftableItem CraftableItem){
-	PRINT_SCREEN("ClientCraftItem");
 	if (Role < ROLE_Authority){
 		ServerCraftItem(CraftableItem);
 		return;
@@ -342,6 +347,28 @@ void ASurHUD::CraftItem(FCraftableItem CraftableItem){
 	if (!ActionBar) return;
 	
 	// remove required items
+
+	for (int i = 0; i < CraftableItem.Ingredients.Num(); i++){
+		for (int j = 0; j < CraftableItem.Ingredients[i].Amount; j++){
+			for (int k = 0; k < Inventory->Inventory.Num(); k++){
+				if (Inventory->Inventory[k]->IsSlotEmpty()) continue;
+				if (Inventory->Inventory[k]->ItemDisplayName == CraftableItem.Ingredients[i].ReqName){
+					Inventory->Inventory[k]->RemoveItemFromSlot(1);
+					break;
+				}
+			}
+			for (int l = 0; l < ActionBar->Inventory.Num(); l++){
+				if (ActionBar->Inventory[l]->IsSlotEmpty()) continue;
+				if (ActionBar->Inventory[l]->ItemDisplayName == CraftableItem.Ingredients[i].ReqName){
+					ActionBar->Inventory[l]->RemoveItemFromSlot(1);
+					break;
+				}
+			}
+		}
+	}
+
+
+
 	if (!TheChar->Controller) return;
 
 	FVector CameraLocation;
@@ -375,7 +402,7 @@ void ASurHUD::CraftItem(FCraftableItem CraftableItem){
 					CraftedItem->bHidden = false;
 					CraftedItem->SetActorEnableCollision(true);
 					CraftedItem->ItemDropped(CameraRotation.Vector());
-
+					
 					return;
 				}
 			}
@@ -383,11 +410,13 @@ void ASurHUD::CraftItem(FCraftableItem CraftableItem){
 	}
 
 
-	if (!TheChar->CurrentlyEquippedItem){
-		PRINT_SCREEN("Equipped crafted item");
-		TheChar->EquipItem(TheChar->ActionBar->Inventory[TheChar->ActionBarIndex]);
+	//if (!TheChar->CurrentlyEquippedItem){
+	//	PRINT_SCREEN("Equipped crafted item");
+	//	TheChar->EquipItem(TheChar->ActionBar->Inventory[TheChar->ActionBarIndex]);
+	//}
+	if (!TheChar->CurrentlyEquippedItem || TheChar->CurrentlyEquippedItem->SurItemBlueprint != ActionBar->Inventory[TheChar->ActionBarIndex]->ItemBlueprint){
+		TheChar->EquipItem(ActionBar->Inventory[TheChar->ActionBarIndex]);
 	}
-
 
 	PRINT_SCREEN("ServerCraftItem");
 

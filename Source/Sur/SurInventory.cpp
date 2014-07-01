@@ -36,13 +36,11 @@ void USurInventory::Initialize(int32 TotalSize){
 
 int32 USurInventory::AddItemToInventoryFromItemStack(ASurItem* NewItem){
 	if (!NewItem){
-		PRINT_SCREEN(TEXT("USurInventory [AddItem] NewItem NULL"));
 		return -1;
 	}
 
 	// check if inventory is full
 	if (IsFull()){
-		PRINT_SCREEN(TEXT("USurInventory [AddItem] Inventory Full Stack"));
 		return 1;
 	}
 
@@ -51,7 +49,6 @@ int32 USurInventory::AddItemToInventoryFromItemStack(ASurItem* NewItem){
 
 		// check if inventory is full
 		if (IsFull()){
-			PRINT_SCREEN(TEXT("NOTICE:  USurInventory [AddItem] Inventory Full Do-While"));
 			return 1;
 		}
 
@@ -60,7 +57,6 @@ int32 USurInventory::AddItemToInventoryFromItemStack(ASurItem* NewItem){
 		if (InventorySlot){
 			OverflowItems = InventorySlot->AddItemToSlot(NewItem);			
 		}else{
-			PRINT_SCREEN(TEXT("NOTICE:  USurInventory [AddItem] No Stackable Slots"));			
 			return NewItem->CurrentItemCount;
 		}
 
@@ -74,13 +70,11 @@ int32 USurInventory::AddItemToInventoryFromItemStack(ASurItem* NewItem){
 
 int32 USurInventory::AddItemToInventoryFromItemOpen(ASurItem* NewItem){
 	if (!NewItem){
-		PRINT_SCREEN(TEXT("USurInventory [AddItem] NewItem NULL"));
 		return -1;
 	}
 
 	// check if inventory is full
 	if (IsFull()){
-		PRINT_SCREEN(TEXT("USurInventory [AddItem] Inventory Full Open"));
 		return 1;
 	}
 
@@ -89,7 +83,6 @@ int32 USurInventory::AddItemToInventoryFromItemOpen(ASurItem* NewItem){
 
 		// check if inventory is full
 		if (IsFull()){
-			PRINT_SCREEN(TEXT("NOTICE:  USurInventory [AddItem] Inventory Full Do-While"));
 			return 1;
 		}
 
@@ -98,7 +91,6 @@ int32 USurInventory::AddItemToInventoryFromItemOpen(ASurItem* NewItem){
 		if (InventorySlot){
 			OverflowItems = InventorySlot->AddItemToSlot(NewItem);
 		}else{
-			PRINT_SCREEN(TEXT("NOTICE:  USurInventory [AddItem] No Open Slots"));
 			return NewItem->CurrentItemCount;
 		}
 
@@ -138,7 +130,6 @@ USurInventorySlot* USurInventory::FindStackSlotForNewItem(ASurItem* NewItem){
 		USurInventorySlot* CurrentSlot = Inventory[i];
 		if (!CurrentSlot) continue;
 		if (NewItem->SurItemBlueprint == CurrentSlot->ItemBlueprint && !CurrentSlot->IsSlotEmpty() && !CurrentSlot->IsSlotFull()){
-			PRINT_SCREEN("SurInventory [FindSlotForNewItem] Stacked on Slot");
 			return CurrentSlot;
 		}
 	}
